@@ -1,3 +1,4 @@
+import api from '../api/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -136,7 +137,7 @@ export const generateMonthlyReport = async (sales, expenses, routes, monthName, 
     const filename = `Monthly_Report_${monthName}_${year}.pdf`;
 
     try {
-        const result = await window.api.pdf.save(pdfBuffer, filename);
+        const result = await api.pdf.save(pdfBuffer, filename);
         if (result.success) {
             alert(`Report saved successfully to:\n${result.filePath}`);
         } else if (result.error !== 'Cancelled') {

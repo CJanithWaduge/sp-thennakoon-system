@@ -1,442 +1,291 @@
 import React, { useState } from 'react';
-import { LogIn, User, Lock } from 'lucide-react';
-import CyberBackground from '../components/CyberBackground';
+import { LogIn, Mail, Lock, UserPlus, KeyRound, ArrowLeft } from 'lucide-react';
+import { auth } from '../db/firebase-config';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  sendPasswordResetEmail 
+} from 'firebase/auth';
 
 const Auth = ({ onAuthenticated, profileImage }) => {
-  const [isRegistering, setIsRegistering] = useState(() => {
-    // Check if registration is being forced from Settings
-    const forced = sessionStorage.getItem('samindu_force_register') === 'true';
-    if (forced) {
-      sessionStorage.removeItem('samindu_force_register');
-      return true;
-    }
-    // Otherwise show registration only if no users are registered yet
-    const users = JSON.parse(localStorage.getItem('samindu_users') || '[]');
-    return users.length === 0;
-  });
-  const [username, setUsername] = useState('');
+  const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot'
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [currentUser, setCurrentUser] = useState(
-    localStorage.getItem('samindu_current_user') || null
-  );
-
-
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-
-
-  // Check if any user is registered
-  const isUserRegistered = () => {
-    const users = JSON.parse(localStorage.getItem('samindu_users') || '[]');
-    return users.length > 0;
+  // Helper to neatly map Firebase errors to human text
+  const getErrorMessage = (errCode) => {
+    switch (errCode) {
+      case 'auth/invalid-email': return 'Invalid email address format.';
+      case 'auth/user-disabled': return 'This account has been disabled.';
+      case 'auth/user-not-found': return 'No account found with this email.';
+      case 'auth/invalid-credential': return 'Incorrect email or password.';
+      case 'auth/wrong-password': return 'Incorrect password.';
+      case 'auth/email-already-in-use': return 'An account already exists with this email.';
+      case 'auth/weak-password': return 'Password should be at least 6 characters.';
+      case 'auth/too-many-requests': return 'Too many failed attempts. Try again later.';
+      default: return 'An unexpected authentication error occurred.';
+    }
   };
 
-  // Handle Registration
-  const handleRegister = (e) => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return setError('Please enter email and password.');
+    
+    setError('');
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ LOGIN SUCCESS for:', userCredential.user.email);
+      onAuthenticated(userCredential.user.email);
+      // We don't stop loading here to prevent flashing before the app swaps out the component
+    } catch (err) {
+      console.error('❌ LOGIN FAILED:', err);
+      setError(getErrorMessage(err.code));
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+    
+    if (!email || !password || !confirmPassword) return setError('All fields are required.');
+    if (password !== confirmPassword) return setError('Passwords do not match.');
+    if (!agreedToTerms) return setError('You must agree to the Terms and Conditions.');
 
-    // Verify terms are agreed
-    if (!agreedToTerms) {
-      setError('You must agree to the Terms and Conditions.');
-      return;
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('✅ REGISTRATION SUCCESS for:', userCredential.user.email);
+      onAuthenticated(userCredential.user.email);
+    } catch (err) {
+      console.error('❌ REGISTRATION FAILED:', err);
+      setError(getErrorMessage(err.code));
+      setLoading(false);
     }
-
-    // Verify all fields are filled
-    if (!username.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError('Username and password are required.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    if (password.length < 4) {
-      setError('Password must be at least 4 characters.');
-      return;
-    }
-
-    // All checks passed - Store credentials
-    const users = JSON.parse(localStorage.getItem('samindu_users') || '[]');
-
-    // Check if username already exists
-    if (users.find(u => u.username === username)) {
-      setError('Username already exists.');
-      return;
-    }
-
-    users.push({ username, password });
-    localStorage.setItem('samindu_users', JSON.stringify(users));
-    localStorage.setItem('samindu_current_user', username);
-
-    onAuthenticated(username);
   };
 
-  // Handle Login
-  const handleLogin = (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    console.log('🔑 LOGIN ATTEMPT:', { currentUser, username, passwordLength: password.length });
     setError('');
+    setMessage('');
+    
+    if (!email) return setError('Please enter your email address to reset password.');
 
-    if (!password.trim()) {
-      setError('Please enter your password.');
-      return;
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage('Password reset email sent! Please check your inbox.');
+      setLoading(false);
+    } catch (err) {
+      console.error('❌ PASSWORD RESET FAILED:', err);
+      setError(getErrorMessage(err.code));
+      setLoading(false);
     }
-
-    const users = JSON.parse(localStorage.getItem('samindu_users') || '[]');
-    const targetUsername = currentUser || username;
-    const user = users.find(u => u.username === targetUsername);
-
-    if (!user) {
-      console.error('❌ LOGIN FAILED: User not found', targetUsername);
-      setError('User not found.');
-      return;
-    }
-
-    if (password !== user.password) {
-      console.error('❌ LOGIN FAILED: Incorrect password for', targetUsername);
-      setError('Incorrect password.');
-      return;
-    }
-
-    console.log('✅ LOGIN SUCCESS for:', user.username);
-    localStorage.setItem('samindu_current_user', user.username);
-    onAuthenticated(user.username);
   };
 
-  // Handle "Sign in as different user"
-  const handleSignInAsOther = () => {
-    setCurrentUser(null);
-    setPassword('');
-    setUsername('');
-    setError('');
-    setIsRegistering(false);
-  };
-
-  // Handle "Create New Account"
-  const handleCreateNewAccount = () => {
-    setCurrentUser(null);
-    setPassword('');
-    setUsername('');
-    setError('');
-    setIsRegistering(true);
-  };
-
-  const usersList = JSON.parse(localStorage.getItem('samindu_users') || '[]');
-  console.log('🔄 Auth Component State:', { isRegistering, currentUser, usersCount: usersList.length });
-
-  // If we have users but none selected, show the profile selector
-  if (!isRegistering && !currentUser && usersList.length > 0) {
-    return (
-      <div className="auth-container">
-        <CyberBackground />
-        <div className="auth-background" style={{ background: 'transparent' }}></div>
-
-        <div className="auth-card" style={{ maxWidth: '500px' }}>
-          <h1 className="auth-title">Who's logging in?</h1>
-          <div className="profile-selection-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-            gap: '20px',
-            width: '100%',
-            marginTop: '20px'
-          }}>
-            {usersList.map((user) => (
-              <button
-                key={user.username}
-                onClick={() => {
-                  // Check if we require password
-                  const requirePassword = localStorage.getItem('samindu_require_password') !== 'false';
-
-                  if (!requirePassword) {
-                    // Quick Login Bypass
-                    console.log('⚡ QUICK LOGIN for:', user.username);
-                    localStorage.setItem('samindu_current_user', user.username);
-                    onAuthenticated(user.username);
-                  } else {
-                    // Standard Login
-                    setCurrentUser(user.username);
-                  }
-                }}
-                className="profile-select-btn"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(59, 130, 246, 0.2)',
-                  borderRadius: '15px',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  color: 'white',
-                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)'
-                }}>
-                  {user.username.charAt(0).toUpperCase()}
-                </div>
-                <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>{user.username}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="auth-footer-links" style={{ marginTop: '30px' }}>
-            <div className="auth-toggle">
-              Missing your account? <button
-                type="button"
-                onClick={handleCreateNewAccount}
-                className="auth-toggle-link"
-              >
-                Create Account
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is registered and currentUser exists, show password-only login
-  if (isUserRegistered() && currentUser) {
-    return (
-      <div className="auth-container">
-        <CyberBackground />
-        <div className="auth-background" style={{ background: 'transparent' }}></div>
-
-        <div className="auth-card">
-          <div className="auth-profile-picture">
-            {profileImage ? (
-              <img src={profileImage} alt="Profile" className="auth-profile-img" />
-            ) : (
-              <div className="auth-profile-placeholder">👤</div>
-            )}
-          </div>
-
-          <h2 className="auth-username" style={{ color: 'white', marginBottom: '10px' }}>{currentUser}</h2>
-          <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '13px', marginBottom: '25px', fontWeight: '400' }}>
-            Verify your identity to continue
-          </p>
-
-          <form onSubmit={handleLogin} className="auth-form">
-            <div className="auth-input-group">
-              <Lock size={18} className="auth-input-icon" />
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="auth-input"
-                autoFocus
-              />
-            </div>
-
-            {error && <div className="auth-error">{error}</div>}
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" className="auth-button" style={{ flex: 1 }}>
-                <LogIn size={16} /> Sign In
-              </button>
-            </div>
-          </form>
-
-          <div className="auth-footer-links">
-            <button
-              onClick={handleSignInAsOther}
-              className="auth-switch-user-link"
-            >
-              Sign in as different user
-            </button>
-            <div className="auth-toggle">
-              Don't have an account? <button
-                type="button"
-                onClick={handleCreateNewAccount}
-                className="auth-toggle-link"
-              >
-                Create Account
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If not registered or user switched, show registration/login form
   return (
-    <div className="auth-container">
-      <CyberBackground />
-      <div className="auth-background" style={{ background: 'transparent' }}></div>
-
-      <div className="auth-card">
-        <div className="auth-profile-picture">
-          {profileImage ? (
-            <img src={profileImage} alt="Profile" className="auth-profile-img" />
-          ) : (
-            <div className="auth-profile-placeholder">👤</div>
-          )}
+    <div style={{
+      display: 'flex', justifyContent: 'center', alignItems: 'center', 
+      minHeight: '100vh', width: '100%', backgroundColor: '#f3f4f6', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div style={{
+        background: 'white', padding: '40px', borderRadius: '16px', 
+        boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '420px',
+        border: '1px solid rgba(0,0,0,0.05)'
+      }}>
+        
+        {/* PREMIUM HEADER */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '50%', background: '#eff6ff', 
+            color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            margin: '0 auto 15px auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+          }}>
+            {mode === 'login' && <LogIn size={30} />}
+            {mode === 'register' && <UserPlus size={30} />}
+            {mode === 'forgot' && <KeyRound size={30} />}
+          </div>
+          <h1 style={{ margin: 0, fontSize: '24px', color: '#111827', fontWeight: '600', letterSpacing: '-0.025em' }}>
+            {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Create Account' : 'Reset Password'}
+          </h1>
+          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+            {mode === 'login' ? 'Sign in exclusively to your agency POS' : 
+             mode === 'register' ? 'Register your secure cloud account' : 
+             'We will send a reset link to your email'}
+          </p>
         </div>
 
-        <h1 className="auth-title">
-          {isRegistering ? 'Create Account' : 'Welcome to W2 Tech'}
-        </h1>
+        {/* ALERTS */}
+        {error && (
+          <div style={{ background: '#fef2f2', color: '#991b1b', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', borderLeft: '4px solid #ef4444' }}>
+            {error}
+          </div>
+        )}
+        {message && (
+          <div style={{ background: '#f0fdf4', color: '#166534', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', borderLeft: '4px solid #22c55e' }}>
+            {message}
+          </div>
+        )}
 
-        <form onSubmit={isRegistering ? handleRegister : handleLogin} className="auth-form">
-          {(!currentUser || isRegistering) && (
-            <div className="auth-input-group">
-              <User size={18} className="auth-input-icon" />
-              <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="auth-input"
-                autoFocus={!isRegistering}
+        {/* FORM */}
+        <form onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleForgotPassword}>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>Email Address</label>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+                <Mail size={18} />
+              </div>
+              <input 
+                type="email" 
+                placeholder="name@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%', padding: '12px 12px 12px 40px', boxSizing: 'border-box',
+                  border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', outline: 'none',
+                  transition: 'all 0.2s', backgroundColor: '#f9fafb', color: '#111827'
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#3b82f6'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)' }}
+                onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
               />
             </div>
-          )}
-
-          {/* License Key Input - REMOVED: Now handled in LicenseEULAScreen */}
-
-          <div className="auth-input-group">
-            <Lock size={18} className="auth-input-icon" />
-            <input
-              type="password"
-              placeholder={isRegistering ? 'Create a password' : 'Password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="auth-input"
-            />
           </div>
 
-          {isRegistering && (
-            <div className="auth-input-group">
-              <Lock size={18} className="auth-input-icon" />
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="auth-input"
-              />
+          {mode !== 'forgot' && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>Password</label>
+                {mode === 'login' && (
+                  <button type="button" onClick={() => { setMode('forgot'); setError(''); setMessage(''); }} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '12px', cursor: 'pointer', padding: 0, fontWeight: '500' }}>
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+                  <Lock size={18} />
+                </div>
+                <input 
+                  type="password" 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 12px 12px 40px', boxSizing: 'border-box',
+                    border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', outline: 'none',
+                    transition: 'all 0.2s', backgroundColor: '#f9fafb', color: '#111827'
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#3b82f6'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)' }}
+                  onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
             </div>
           )}
 
+          {mode === 'register' && (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>Confirm Password</label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+                    <Lock size={18} />
+                  </div>
+                  <input 
+                    type="password" 
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px 12px 12px 40px', boxSizing: 'border-box',
+                      border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', outline: 'none',
+                      transition: 'all 0.2s', backgroundColor: '#f9fafb', color: '#111827'
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#3b82f6'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
+                  />
+                </div>
+              </div>
 
-          {isRegistering && (
-            <div className="auth-terms-container">
-              <div className="auth-terms-checkbox">
-                <input
-                  type="checkbox"
-                  id="terms-checkbox"
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '25px', gap: '8px' }}>
+                <input 
+                  type="checkbox" 
+                  id="terms" 
                   checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="auth-checkbox"
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#3b82f6' }}
                 />
-                <label htmlFor="terms-checkbox" className="auth-checkbox-label">
-                  I agree to the Terms and Conditions
+                <label htmlFor="terms" style={{ fontSize: '13px', color: '#4b5563', cursor: 'pointer' }}>
+                  I agree to the <span onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} style={{ color: '#3b82f6', textDecoration: 'underline' }}>Terms and Conditions</span>
                 </label>
               </div>
-              <button
-                type="button"
-                className="auth-see-terms-btn"
-                onClick={() => setShowTermsModal(true)}
-              >
-                See
-              </button>
-            </div>
+            </>
           )}
 
-          {error && <div className="auth-error">{error}</div>}
-
-          {/* TRIPLE LOCK BUTTON - Disabled until terms agreed and fields filled */}
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={
-              isRegistering && (
-                !agreedToTerms ||
-                !username.trim() ||
-                !password.trim() ||
-                !confirmPassword.trim()
-              )
-            }
-            title={
-              isRegistering
-                ? !agreedToTerms
-                  ? 'Must agree to terms'
-                  : !username.trim()
-                    ? 'Username required'
-                    : !password.trim()
-                      ? 'Password required'
-                      : 'Ready to register'
-                : 'Sign in'
-            }
-            aria-label={isRegistering ? 'Accept and create account' : 'Sign in'}
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              width: '100%', padding: '12px', background: loading ? '#93c5fd' : '#2563eb', 
+              color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '500',
+              cursor: loading ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s',
+              display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1)'
+            }}
+            onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#1d4ed8')}
+            onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#2563eb')}
           >
-            <LogIn size={16} />
-            {isRegistering ? 'Accept & Create Account' : 'Sign In'}
+            {loading && <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            
+            {!loading && mode === 'login' && 'Sign In'}
+            {!loading && mode === 'register' && 'Create Account'}
+            {!loading && mode === 'forgot' && 'Send Reset Link'}
           </button>
-
-          {!isRegistering ? (
-            <div className="auth-toggle">
-              Don't have an account? <button
-                type="button"
-                onClick={() => setIsRegistering(true)}
-                className="auth-toggle-link"
-              >
-                Create Account
-              </button>
-            </div>
-          ) : (
-            isUserRegistered() && (
-              <div className="auth-toggle">
-                Already have an account? <button
-                  type="button"
-                  onClick={() => setIsRegistering(false)}
-                  className="auth-toggle-link"
-                >
-                  Sign In
-                </button>
-              </div>
-            )
-          )}
         </form>
+
+        {/* BOTTOM TOGGLES */}
+        <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>
+          {mode === 'login' && (
+            <span>Don't have an account? <button onClick={() => { setMode('register'); setError(''); setMessage(''); }} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '500', cursor: 'pointer' }}>Sign up</button></span>
+          )}
+          {mode === 'register' && (
+            <span>Already have an account? <button onClick={() => { setMode('login'); setError(''); setMessage(''); }} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '500', cursor: 'pointer' }}>Sign in</button></span>
+          )}
+          {mode === 'forgot' && (
+            <button onClick={() => { setMode('login'); setError(''); setMessage(''); }} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', width: '100%' }}>
+              <ArrowLeft size={14} /> Back to Sign in
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Terms & Conditions Modal */}
+      {/* TERMS MODAL */}
       {showTermsModal && (
-        <div className="auth-modal-overlay" onClick={() => setShowTermsModal(false)}>
-          <div className="auth-modal-content" onClick={e => e.stopPropagation()}>
-            <div className="auth-modal-header">
-              <h3>Terms & Conditions</h3>
-              <button className="auth-modal-close" onClick={() => setShowTermsModal(false)}>×</button>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setShowTermsModal(false)}>
+          <div style={{ background: 'white', borderRadius: '12px', maxWidth: '500px', width: '100%', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#111827', fontSize: '18px', fontWeight: '600' }}>Terms & Conditions</h3>
+              <button onClick={() => setShowTermsModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', color: '#9ca3af', cursor: 'pointer', padding: 0 }}>&times;</button>
             </div>
-            <div className="auth-modal-body">
-              <p><strong>1. Data Responsibility:</strong> This software stores data <strong>locally</strong> in your device storage. The developer does not keep copies of your data.</p>
-              <p><strong>2. User Responsibility:</strong> You are solely responsible for manual backups using the "Export Data" feature in settings.</p>
-              <p><strong>3. License:</strong> This system is provided as a licensed product. Unauthorized distribution is prohibited.</p>
-              <p><strong>4. "As-Is" Policy:</strong> The software is provided without warranties of any kind. Use at your own risk.</p>
-              <hr style={{ opacity: 0.1, margin: '15px 0' }} />
-              <p style={{ fontSize: '12px', fontStyle: 'italic' }}>By creating an account, you acknowledge that you understand the local-storage nature of this system.</p>
+            <div style={{ padding: '24px', color: '#4b5563', fontSize: '14px', lineHeight: '1.6' }}>
+              <p style={{ margin: '0 0 12px 0' }}><strong>1. Account Security:</strong> You are responsible for maintaining the confidentiality of your login credentials.</p>
+              <p style={{ margin: '0 0 12px 0' }}><strong>2. Cloud Firebase Sync:</strong> Data is synchronized directly to your Google Cloud infrastructure securely.</p>
+              <p style={{ margin: '0 0 12px 0' }}><strong>3. Real-time Access:</strong> Operating from multiple devices updates records simultaneously.</p>
+              <p style={{ margin: 0 }}><strong>4. Acceptable Use:</strong> You agree to use this Point of Sale system strictly for lawful business tracking purposes.</p>
             </div>
-            <div className="auth-modal-footer">
-              <button className="auth-button" onClick={() => setShowTermsModal(false)}>I Understand</button>
+            <div style={{ padding: '16px 24px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', textAlign: 'right' }}>
+              <button onClick={() => setShowTermsModal(false)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '500', cursor: 'pointer' }}>I Understand</button>
             </div>
           </div>
         </div>

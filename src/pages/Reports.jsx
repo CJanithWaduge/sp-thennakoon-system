@@ -1,5 +1,6 @@
+import api from '../api/client';
 import React, { useState, useMemo } from 'react';
-import { Download, Calendar, Filter } from 'lucide-react';
+import { Download, Calendar, Filter, Package, Users, DollarSign, BarChart3 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -217,7 +218,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
     const filename = `Stock_Report_${startDate}.pdf`;
 
     try {
-      const result = await window.api.pdf.save(pdfBuffer, filename);
+      const result = await api.pdf.save(pdfBuffer, filename);
       if (result.success) {
         alert(`Report downloaded successfully!`);
       } else if (result.error !== 'Cancelled') {
@@ -377,7 +378,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
     const filename = `Creditors_Summary_${startDate}_to_${endDate}.pdf`;
 
     try {
-      const result = await window.api.pdf.save(pdfBuffer, filename);
+      const result = await api.pdf.save(pdfBuffer, filename);
       if (result.success) {
         alert(`Creditors report saved to:\n${result.filePath}`);
       } else if (result.error !== 'Cancelled') {
@@ -506,7 +507,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
     const filename = `Sales_Report_${startDate}_to_${endDate}.pdf`;
 
     try {
-      const result = await window.api.pdf.save(pdfBuffer, filename);
+      const result = await api.pdf.save(pdfBuffer, filename);
       if (result.success) {
         alert(`Sales report saved to:\n${result.filePath}`);
       } else if (result.error !== 'Cancelled') {
@@ -576,7 +577,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
     const filename = `Expenses_Report_${startDate}_to_${endDate}.pdf`;
 
     try {
-      const result = await window.api.pdf.save(pdfBuffer, filename);
+      const result = await api.pdf.save(pdfBuffer, filename);
       if (result.success) {
         alert(`Expenses report saved to:\n${result.filePath}`);
       } else if (result.error !== 'Cancelled') {
@@ -609,7 +610,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
             onChange={(e) => setReportType(e.target.value)}
           />
           <label htmlFor="stock-report">
-            <span className="report-icon">📦</span>
+            <span className="report-icon"><Package size={18} /></span>
             Stock
           </label>
         </div>
@@ -624,7 +625,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
             onChange={(e) => setReportType(e.target.value)}
           />
           <label htmlFor="creditors-report">
-            <span className="report-icon">👤</span>
+            <span className="report-icon"><Users size={18} /></span>
             Creditors
           </label>
         </div>
@@ -639,7 +640,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
             onChange={(e) => setReportType(e.target.value)}
           />
           <label htmlFor="sales-report">
-            <span className="report-icon">💰</span>
+            <span className="report-icon"><DollarSign size={18} /></span>
             Sales
           </label>
         </div>
@@ -654,7 +655,7 @@ const Reports = ({ items = [], salesHistory = [], companyName = 'W2 Tech Solutio
             onChange={(e) => setReportType(e.target.value)}
           />
           <label htmlFor="expenses-report">
-            <span className="report-icon">📊</span>
+            <span className="report-icon"><BarChart3 size={18} /></span>
             Expenses
           </label>
         </div>

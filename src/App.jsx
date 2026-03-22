@@ -1,3 +1,4 @@
+import api from './api/client';
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { HashRouter } from 'react-router-dom';
@@ -72,17 +73,17 @@ function App() {
       console.log(`📦 Switching to database for user: ${username}`);
 
       // Initialize the database for this specific user
-      await window.api.database.init(username);
+      await api.database.init(username);
 
       const [itemsData, salesData, expensesData, statementsData, routesData, companyData, logoData, profileData] = await Promise.all([
-        window.api.items.getAll(),
-        window.api.sales.getAll(),
-        window.api.expenses.getAll(),
-        window.api.statements.getAll(),
-        window.api.routes.getAll(),
-        window.api.settings.get('company_name'),
-        window.api.settings.get('logo'),
-        window.api.settings.get('profile_image'),
+        api.items.getAll(),
+        api.sales.getAll(),
+        api.expenses.getAll(),
+        api.statements.getAll(),
+        api.routes.getAll(),
+        api.settings.get('company_name'),
+        api.settings.get('logo'),
+        api.settings.get('profile_image'),
       ]);
 
       console.log(`📊 Data loaded for ${username}:`, {
@@ -185,7 +186,7 @@ function App() {
     if (isLoading) return;
     const saveName = async () => {
       try {
-        await window.api.settings.set('company_name', companyName);
+        await api.settings.set('company_name', companyName);
       } catch (error) {
         console.error('Error saving company name:', error);
       }
@@ -198,7 +199,7 @@ function App() {
     if (isLoading) return;
     const saveLogo = async () => {
       try {
-        await window.api.settings.set('logo', logo || '');
+        await api.settings.set('logo', logo || '');
       } catch (error) {
         console.error('Error saving logo:', error);
       }
@@ -211,7 +212,7 @@ function App() {
     if (isLoading) return;
     const saveProfile = async () => {
       try {
-        await window.api.settings.set('profile_image', profileImage || '');
+        await api.settings.set('profile_image', profileImage || '');
       } catch (error) {
         console.error('Error saving profile image:', error);
       }
@@ -229,7 +230,7 @@ function App() {
     };
 
     try {
-      const savedEntry = await window.api.statements.add(newEntry);
+      const savedEntry = await api.statements.add(newEntry);
       setStatementEntries(prev => [savedEntry, ...prev]);
     } catch (error) {
       console.error('Error adding statement entry:', error);
@@ -239,7 +240,7 @@ function App() {
   const deleteStatementEntry = async (id) => {
     if (window.confirm("Delete this entry from company statement?")) {
       try {
-        await window.api.statements.delete(id);
+        await api.statements.delete(id);
         setStatementEntries(prev => prev.filter(e => e.id !== id));
       } catch (error) {
         console.error('Error deleting statement entry:', error);
@@ -257,7 +258,7 @@ function App() {
         const totalPhysicalDeduction = (soldItem.qty || 0) + (soldItem.freeQty || 0);
         const updatedItem = { ...item, lorryQty: Math.max(0, item.lorryQty - totalPhysicalDeduction) };
         // Update in database
-        window.api.items.update(item.id, updatedItem).catch(err =>
+        api.items.update(item.id, updatedItem).catch(err =>
           console.error('Error updating item in database:', err)
         );
         return updatedItem;
@@ -280,7 +281,7 @@ function App() {
     };
 
     try {
-      const savedSale = await window.api.sales.add(newTransaction);
+      const savedSale = await api.sales.add(newTransaction);
       setSalesHistory(prev => [savedSale, ...prev]);
     } catch (error) {
       console.error('Error recording sale:', error);
@@ -315,7 +316,7 @@ function App() {
         };
 
         // Update in database
-        window.api.sales.update(sale.id, updatedSale).catch(err =>
+        api.sales.update(sale.id, updatedSale).catch(err =>
           console.error('Error updating sale in database:', err)
         );
 
@@ -337,7 +338,7 @@ function App() {
     };
 
     try {
-      const savedEntry = await window.api.statements.add(newEntry);
+      const savedEntry = await api.statements.add(newEntry);
       setStatementEntries(prev => [savedEntry, ...prev]);
     } catch (error) {
       console.error('Error adding payment history entry:', error);
@@ -352,7 +353,7 @@ function App() {
     }
     if (window.confirm(`Delete route "${routeToDelete}"?`)) {
       try {
-        await window.api.routes.delete(routeToDelete);
+        await api.routes.delete(routeToDelete);
         setRoutes(prev => prev.filter(r => r !== routeToDelete));
       } catch (error) {
         console.error('Error deleting route:', error);
@@ -372,8 +373,8 @@ function App() {
       setRoutes(updatedRoutes);
 
       // Update in database
-      await window.api.routes.delete(oldName);
-      await window.api.routes.add(newName);
+      await api.routes.delete(oldName);
+      await api.routes.add(newName);
 
       // 2. Update sales history to use the new route name
       const updatedHistory = salesHistory.map(sale =>
@@ -384,7 +385,7 @@ function App() {
       // Sync affected sales with database
       for (const sale of updatedHistory) {
         if (sale.routeName === newName) {
-          await window.api.sales.update(sale.id, sale);
+          await api.sales.update(sale.id, sale);
         }
       }
     } catch (error) {
@@ -401,7 +402,7 @@ function App() {
 
       const updatedSale = updatedHistory.find(s => s.id === saleId);
       if (updatedSale) {
-        await window.api.sales.update(saleId, updatedSale);
+        await api.sales.update(saleId, updatedSale);
       }
     } catch (error) {
       console.error('Error renaming shop:', error);
@@ -411,7 +412,7 @@ function App() {
   const handleFullReset = async () => {
     if (window.confirm("WARNING: This will wipe all inventory, sales, and settings data. Continue?")) {
       try {
-        await window.api.database.reset();
+        await api.database.reset();
         setItems([]);
         setSalesHistory([]);
         setExpenses([]);
@@ -454,7 +455,7 @@ function App() {
       if (totalQtyToRestore > 0) {
         const restoredItem = { ...item, lorryQty: item.lorryQty + totalQtyToRestore };
         // Update in database
-        window.api.items.update(item.id, restoredItem).catch(err =>
+        api.items.update(item.id, restoredItem).catch(err =>
           console.error('Error updating item in database:', err)
         );
         return restoredItem;
@@ -467,7 +468,7 @@ function App() {
     // Delete all sales for today from database and state
     try {
       for (const sale of todaysSales) {
-        await window.api.sales.delete(sale.id);
+        await api.sales.delete(sale.id);
       }
       setSalesHistory(prev => prev.filter(s => new Date(s.date).toLocaleDateString() !== today));
       console.log(`✓ Deleted ${todaysSales.length} sale(s) and restored inventory for today`);
@@ -492,7 +493,7 @@ function App() {
     // Delete all expenses for today from database and state
     try {
       for (const expense of todaysExpenses) {
-        await window.api.expenses.delete(expense.id);
+        await api.expenses.delete(expense.id);
       }
       setExpenses(prev => prev.filter(e => new Date(e.createdAt).toLocaleDateString() !== today));
       console.log(`✓ Deleted ${todaysExpenses.length} expense(s) for today`);
@@ -516,23 +517,23 @@ function App() {
     // Sync with database
     setTimeout(async () => {
       try {
-        const existingItems = await window.api.items.getAll();
+        const existingItems = await api.items.getAll();
         const existingItemMap = new Map(existingItems.map(item => [item.id, item]));
         const existingNameMap = new Map(existingItems.map(item => [item.name, item.id]));
 
         for (const item of newItems) {
           if (existingItemMap.has(item.id)) {
             // Update existing
-            await window.api.items.update(item.id, item);
+            await api.items.update(item.id, item);
           } else {
             // Check if item with same name already exists
             const existingIdWithName = existingNameMap.get(item.name);
             if (existingIdWithName) {
               // Item with this name already exists, update it instead
-              await window.api.items.update(existingIdWithName, item);
+              await api.items.update(existingIdWithName, item);
             } else {
               // Add new
-              await window.api.items.add(item);
+              await api.items.add(item);
             }
           }
         }
@@ -540,7 +541,7 @@ function App() {
         // Delete items that were removed
         for (const existingItem of existingItems) {
           if (!newItems.find(item => item.id === existingItem.id)) {
-            await window.api.items.delete(existingItem.id);
+            await api.items.delete(existingItem.id);
           }
         }
       } catch (error) {
@@ -564,17 +565,17 @@ function App() {
     setTimeout(async () => {
       try {
         for (const route of newRoutes) {
-          const existingRoutes = await window.api.routes.getAll();
+          const existingRoutes = await api.routes.getAll();
           if (!existingRoutes.find(r => r === route)) {
-            await window.api.routes.add(route);
+            await api.routes.add(route);
           }
         }
 
         // Delete routes that were removed
-        const existingRoutes = await window.api.routes.getAll();
+        const existingRoutes = await api.routes.getAll();
         for (const existingRoute of existingRoutes) {
           if (!newRoutes.includes(existingRoute)) {
-            await window.api.routes.delete(existingRoute);
+            await api.routes.delete(existingRoute);
           }
         }
       } catch (error) {
@@ -597,7 +598,7 @@ function App() {
     // Sync with database
     setTimeout(async () => {
       try {
-        const existingExpenses = await window.api.expenses.getAll();
+        const existingExpenses = await api.expenses.getAll();
         const existingExpenseMap = new Map(existingExpenses.map(exp => [exp.id, exp]));
 
         for (const expense of newExpenses) {
@@ -605,14 +606,14 @@ function App() {
             // Update existing - Note: API doesn't have update, so skip
           } else {
             // Add new
-            await window.api.expenses.add(expense);
+            await api.expenses.add(expense);
           }
         }
 
         // Delete expenses that were removed
         for (const existingExpense of existingExpenses) {
           if (!newExpenses.find(exp => exp.id === existingExpense.id)) {
-            await window.api.expenses.delete(existingExpense.id);
+            await api.expenses.delete(existingExpense.id);
           }
         }
       } catch (error) {
@@ -747,7 +748,7 @@ function App() {
             <Dashboard items={items} salesHistory={salesHistory} statementEntries={statementEntries} expenses={expenses} onReset={handleFullReset} />
           )}
           {activeTab === 'Inventory' && (
-            <Inventory items={items} setItems={handleSetItems} searchTerm={searchTerm} onLogTransaction={addStatementEntry} />
+            <Inventory items={items} setItems={handleSetItems} searchTerm={searchTerm} />
           )}
           {activeTab === 'Sales' && (
             <Sales items={items} onConfirmSale={recordSale} salesHistory={salesHistory} routes={routes} setRoutes={handleSetRoutes} onResetDailySales={handleResetDailySales} />

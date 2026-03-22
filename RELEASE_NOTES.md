@@ -1,6 +1,6 @@
-# Agency Management System v1.1.0 Release Notes
+# Agency Management System v1.1.1 Release Notes
 
-**Release Date:** February 16, 2026
+**Release Date:** February 27, 2026
 
 ## Overview
 v1.1.0 is a stable release of the Agency Management System featuring a complete, production-ready application for managing agency operations with a comprehensive suite of business tools.
@@ -68,6 +68,6 @@ For issues, feature requests, or feedback, please contact the development team.
 
 ---
 
-**Version:** 1.1.0  
+**Version:** 1.1.1  
 **Status:** Stable Release  
-**Built:** February 16, 2026
+**Built:** February 27, 2026

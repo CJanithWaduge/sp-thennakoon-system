@@ -162,7 +162,7 @@ const Analytics = ({
     return (totalPaid / totalSales) * 100;
   }, [filteredSales]);
 
-  const metrics = useMemo(() => {
+   const metrics = useMemo(() => {
     const totalSales = filteredSales.reduce((acc, s) => acc + s.totalBill, 0);
     const totalPaid = filteredSales.reduce((acc, s) => acc + (s.paidAmount || 0), 0);
     const totalDebt = filteredSales.reduce((acc, s) => s.isCredit ? acc + (s.totalBill - (s.paidAmount || 0)) : acc, 0);
@@ -173,7 +173,7 @@ const Analytics = ({
     <div style={{ padding: '32px 12px', width: '98%', maxWidth: '1600px', margin: '0 auto', color: COLORS.textMain }}>
 
       {/* Refined Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '20px' }}>
+       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <h1 style={{ fontSize: '30px', fontWeight: '800', margin: 0, letterSpacing: '-0.5px' }}>Business Intelligence</h1>
           <p style={{ margin: '4px 0 0 0', color: COLORS.textLight, fontSize: '14px' }}>Deep analytical insights for {timeRange.toLowerCase()}</p>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Truck, Warehouse, Trash2, Search, Plus, AlertTriangle, Pencil, Check, X, Calendar } from 'lucide-react';
 import { calculateTotalAssets, formatCurrency } from '../utils/calculations';
 
-const Inventory = ({ items, setItems, searchTerm, onLogTransaction }) => {
+const Inventory = ({ items, setItems, searchTerm }) => {
   const [inputValues, setInputValues] = useState({});
   const [newItemName, setNewItemName] = useState('');
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm || '');
@@ -52,19 +52,12 @@ const Inventory = ({ items, setItems, searchTerm, onLogTransaction }) => {
 
     setItems(items.map(item => {
       if (item.id === id) {
+        // Calculate new buying price based on weighted average
         const currentWhQty = item.whQty || 0;
-        const newUnitPrice = billValue > 0 ? (billValue / qty) : (item.buyingPrice || 0);
-
-        // Log transaction
-        if (onLogTransaction) {
-          onLogTransaction({
-            date: new Date(selectedDate).toISOString(),
-            category: 'Inventory',
-            type: 'restock',
-            details: `Restocked ${itemName}: +${qty} units (Bill: Rs. ${billValue.toLocaleString('en-PK', { minimumFractionDigits: 2 })})`,
-            amount: billValue
-          });
-        }
+        const currentTotalValue = currentWhQty * (item.buyingPrice || 0);
+        const newTotalValue = currentTotalValue + billValue;
+        const newTotalQty = currentWhQty + qty;
+        const newUnitPrice = newTotalQty > 0 ? newTotalValue / newTotalQty : 0;
 
         return {
           ...item,
@@ -97,17 +90,6 @@ const Inventory = ({ items, setItems, searchTerm, onLogTransaction }) => {
         lorryQty: (item.lorryQty || 0) + amount
       } : item
     ));
-
-    // Log transaction
-    if (onLogTransaction) {
-      onLogTransaction({
-        date: new Date(selectedDate).toISOString(),
-        category: 'Inventory',
-        type: 'load_lorry',
-        details: `Loaded to Lorry: ${itemName} +${amount} units (Warehouse: ${(item.whQty || 0) - amount} → Lorry: ${(item.lorryQty || 0) + amount})`,
-        amount: amount
-      });
-    }
 
     handleInputChange(id, 'load', '');
   };

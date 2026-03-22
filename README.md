@@ -1,8 +1,8 @@
-# Agency Management System v1.1.0
+# Agency Management System v1.1.1
 
 A complete desktop/web application for managing agency operations with sales, inventory, expenses, and analytics modules.
 
-**Current Version:** 1.1.0 (February 16, 2026)
+**Current Version:** 1.1.1 (February 27, 2026)
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) for detailed release information.
 

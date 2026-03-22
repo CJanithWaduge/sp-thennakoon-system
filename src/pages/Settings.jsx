@@ -1,3 +1,4 @@
+import api from '../api/client';
 import React, { useState, useEffect } from 'react';
 import { Download, Upload, Trash2, ShieldAlert, Building, Palette, Image as ImageIcon, X, Lock, Info, ExternalLink, Mail, LogOut, UserPlus, Fingerprint } from 'lucide-react';
 
@@ -42,7 +43,7 @@ const Settings = ({
 
     try {
       // Delete database file
-      await window.api.database.deleteUser(targetUser);
+      await api.database.deleteUser(targetUser);
 
       // Remove from localStorage
       const filteredUsers = users.filter(u => u.username !== targetUser);
@@ -151,13 +152,13 @@ const Settings = ({
         };
 
         // Delete all current data
-        await window.api.database.reset();
+        await api.database.reset();
 
         // Restore inventory items
         if (backupData.inventory && backupData.inventory.length > 0) {
           for (const item of backupData.inventory) {
             try {
-              await window.api.items.add(item);
+              await api.items.add(item);
               restored.inventory++;
             } catch (error) {
               console.warn('Failed to restore item:', item.name, error);
@@ -169,7 +170,7 @@ const Settings = ({
         if (backupData.sales && backupData.sales.length > 0) {
           for (const sale of backupData.sales) {
             try {
-              await window.api.sales.add(sale);
+              await api.sales.add(sale);
               restored.sales++;
             } catch (error) {
               console.warn('Failed to restore sale record:', error);
@@ -181,7 +182,7 @@ const Settings = ({
         if (backupData.routes && backupData.routes.length > 0) {
           for (const route of backupData.routes) {
             try {
-              await window.api.routes.add(route);
+              await api.routes.add(route);
               restored.routes++;
             } catch (error) {
               console.warn('Failed to restore route:', route, error);
@@ -193,7 +194,7 @@ const Settings = ({
         if (backupData.expenses && backupData.expenses.length > 0) {
           for (const expense of backupData.expenses) {
             try {
-              await window.api.expenses.add(expense);
+              await api.expenses.add(expense);
               restored.expenses++;
             } catch (error) {
               console.warn('Failed to restore expense:', error);
@@ -205,7 +206,7 @@ const Settings = ({
         if (backupData.statements && backupData.statements.length > 0) {
           for (const statement of backupData.statements) {
             try {
-              await window.api.statements.add(statement);
+              await api.statements.add(statement);
               restored.statements++;
             } catch (error) {
               console.warn('Failed to restore statement:', error);
