@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LogIn, Mail, Lock, UserPlus, KeyRound, ArrowLeft } from 'lucide-react';
 import { auth } from '../db/firebase-config';
+import defaultLogo from '../assets/logo.png';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -111,9 +112,10 @@ const Auth = ({ onAuthenticated, profileImage }) => {
             margin: '0 auto 15px auto', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
           }}>
             <img
-              src={profileImage || '/logo.png'}
+              src={profileImage || defaultLogo}
               alt="Agency logo"
               style={{ width: '90%', height: '90%', objectFit: 'contain' }}
+              onError={(e) => { e.currentTarget.src = defaultLogo; }}
             />
           </div>
           <h1 style={{ margin: 0, fontSize: '24px', color: '#111827', fontWeight: '600', letterSpacing: '-0.025em' }}>

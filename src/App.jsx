@@ -1,6 +1,7 @@
 import api from './api/client';
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import defaultLogo from './assets/logo.png';
 import { HashRouter } from 'react-router-dom';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -640,14 +641,12 @@ function App() {
           <button className="sidebar-toggle" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}><Menu size={20} /></button>
         </div>
         <div className="brand">
-          {logo && (
-            <img
-              src={logo}
-              alt="Logo"
-              style={{ height: '60px', maxWidth: '180px', objectFit: 'contain' }}
-              onError={() => setLogo(null)}
-            />
-          )}
+          <img
+            src={logo || defaultLogo}
+            alt="Logo"
+            style={{ height: '60px', maxWidth: '180px', objectFit: 'contain' }}
+            onError={(e) => { e.currentTarget.src = defaultLogo; setLogo(null); }}
+          />
           <div className="company-name" style={{ color: isDarkMode ? 'var(--brand-color)' : '#1e40af' }}>{companyName}</div>
         </div>
 
