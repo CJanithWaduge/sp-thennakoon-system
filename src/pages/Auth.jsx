@@ -106,13 +106,15 @@ const Auth = ({ onAuthenticated, profileImage }) => {
         {/* PREMIUM HEADER */}
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{
-            width: '64px', height: '64px', borderRadius: '50%', background: '#eff6ff', 
-            color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            margin: '0 auto 15px auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+            width: '144px', height: '144px', borderRadius: '50%', background: '#eff6ff', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            margin: '0 auto 15px auto', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
           }}>
-            {mode === 'login' && <LogIn size={30} />}
-            {mode === 'register' && <UserPlus size={30} />}
-            {mode === 'forgot' && <KeyRound size={30} />}
+            <img
+              src={profileImage || '/logo.png'}
+              alt="Agency logo"
+              style={{ width: '90%', height: '90%', objectFit: 'contain' }}
+            />
           </div>
           <h1 style={{ margin: 0, fontSize: '24px', color: '#111827', fontWeight: '600', letterSpacing: '-0.025em' }}>
             {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Create Account' : 'Reset Password'}
@@ -279,10 +281,10 @@ const Auth = ({ onAuthenticated, profileImage }) => {
               <button onClick={() => setShowTermsModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', color: '#9ca3af', cursor: 'pointer', padding: 0 }}>&times;</button>
             </div>
             <div style={{ padding: '24px', color: '#4b5563', fontSize: '14px', lineHeight: '1.6' }}>
-              <p style={{ margin: '0 0 12px 0' }}><strong>1. Account Security:</strong> You are responsible for maintaining the confidentiality of your login credentials.</p>
-              <p style={{ margin: '0 0 12px 0' }}><strong>2. Cloud Firebase Sync:</strong> Data is synchronized directly to your Google Cloud infrastructure securely.</p>
-              <p style={{ margin: '0 0 12px 0' }}><strong>3. Real-time Access:</strong> Operating from multiple devices updates records simultaneously.</p>
-              <p style={{ margin: 0 }}><strong>4. Acceptable Use:</strong> You agree to use this Point of Sale system strictly for lawful business tracking purposes.</p>
+              <p style={{ margin: '0 0 12px 0' }}><strong>1. User Agreement:</strong> By using this POS system, you agree to operate it within your licensed business environment and in compliance with applicable laws and regulations.</p>
+              <p style={{ margin: '0 0 12px 0' }}><strong>2. Data Ownership:</strong> Your business data remains your property. We process and store it securely as per configured Firebase project settings.</p>
+              <p style={{ margin: '0 0 12px 0' }}><strong>3. Privacy:</strong> Do not share account credentials. You are responsible for all actions performed under your account.</p>
+              <p style={{ margin: 0 }}><strong>4. Updates:</strong> We may update the system features and policy terms from time to time; continued use indicates acceptance.</p>
             </div>
             <div style={{ padding: '16px 24px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', textAlign: 'right' }}>
               <button onClick={() => setShowTermsModal(false)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '500', cursor: 'pointer' }}>I Understand</button>
