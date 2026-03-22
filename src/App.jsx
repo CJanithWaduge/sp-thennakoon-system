@@ -27,6 +27,8 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loggedInUser, setLoggedInUser] = useState(localStorage.getItem('samindu_current_user') || '');
@@ -39,6 +41,23 @@ function App() {
   }, []);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) setIsMobileSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNavClick = (tabId) => {
+    setActiveTab(tabId);
+    setSearchTerm('');
+    if (isMobile) setIsMobileSidebarOpen(false);
+  };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -504,8 +523,39 @@ function App() {
     }
   };
 
+  // Update a single item field(s) in Firestore (called from Inventory.jsx handlers)
+  const updateItemInDb = async (id, changes) => {
+    try {
+      await api.items.update(id, changes);
+    } catch (error) {
+      console.error('Error updating item in database:', error);
+    }
+  };
+
+  // Delete a single item from Firestore (called from Inventory.jsx deleteItem handler)
+  const deleteItemFromDb = async (id) => {
+    try {
+      await api.items.delete(id);
+    } catch (error) {
+      console.error('Error deleting item from database:', error);
+    }
+  };
+
+  // Add a new item to Firestore and return it with the Firebase document ID
+  const handleAddItem = async (newItemData) => {
+    try {
+      const savedItem = await api.items.add(newItemData);
+      // savedItem.id is now the real Firestore document ID (string)
+      setItems(prev => [...prev, savedItem]);
+      return savedItem;
+    } catch (error) {
+      console.error('Error adding item to database:', error);
+    }
+  };
+
   // Wrapper for setItems that also saves to database
-  const handleSetItems = async (newItemsOrUpdater) => {
+  // Only used for bulk operations (delete, rename, price edits) where items already have Firebase IDs
+  const handleSetItems = (newItemsOrUpdater) => {
     let newItems;
     if (typeof newItemsOrUpdater === 'function') {
       newItems = newItemsOrUpdater(items);
@@ -514,45 +564,10 @@ function App() {
     }
 
     setItems(newItems);
-
-    // Sync with database
-    setTimeout(async () => {
-      try {
-        const existingItems = await api.items.getAll();
-        const existingItemMap = new Map(existingItems.map(item => [item.id, item]));
-        const existingNameMap = new Map(existingItems.map(item => [item.name, item.id]));
-
-        for (const item of newItems) {
-          if (existingItemMap.has(item.id)) {
-            // Update existing
-            await api.items.update(item.id, item);
-          } else {
-            // Check if item with same name already exists
-            const existingIdWithName = existingNameMap.get(item.name);
-            if (existingIdWithName) {
-              // Item with this name already exists, update it instead
-              await api.items.update(existingIdWithName, item);
-            } else {
-              // Add new
-              await api.items.add(item);
-            }
-          }
-        }
-
-        // Delete items that were removed
-        for (const existingItem of existingItems) {
-          if (!newItems.find(item => item.id === existingItem.id)) {
-            await api.items.delete(existingItem.id);
-          }
-        }
-      } catch (error) {
-        console.error('Error syncing items with database:', error);
-      }
-    }, 0);
   };
 
   // Wrapper for setRoutes that also saves to database
-  const handleSetRoutes = async (newRoutesOrUpdater) => {
+  const handleSetRoutes = (newRoutesOrUpdater) => {
     let newRoutes;
     if (typeof newRoutesOrUpdater === 'function') {
       newRoutes = newRoutesOrUpdater(routes);
@@ -561,32 +576,10 @@ function App() {
     }
 
     setRoutes(newRoutes);
-
-    // Sync with database
-    setTimeout(async () => {
-      try {
-        for (const route of newRoutes) {
-          const existingRoutes = await api.routes.getAll();
-          if (!existingRoutes.find(r => r === route)) {
-            await api.routes.add(route);
-          }
-        }
-
-        // Delete routes that were removed
-        const existingRoutes = await api.routes.getAll();
-        for (const existingRoute of existingRoutes) {
-          if (!newRoutes.includes(existingRoute)) {
-            await api.routes.delete(existingRoute);
-          }
-        }
-      } catch (error) {
-        console.error('Error syncing routes with database:', error);
-      }
-    }, 0);
   };
 
   // Wrapper for setExpenses that also saves to database
-  const handleSetExpenses = async (newExpensesOrUpdater) => {
+  const handleSetExpenses = (newExpensesOrUpdater) => {
     let newExpenses;
     if (typeof newExpensesOrUpdater === 'function') {
       newExpenses = newExpensesOrUpdater(expenses);
@@ -595,32 +588,34 @@ function App() {
     }
 
     setExpenses(newExpenses);
+  };
 
-    // Sync with database
-    setTimeout(async () => {
-      try {
-        const existingExpenses = await api.expenses.getAll();
-        const existingExpenseMap = new Map(existingExpenses.map(exp => [exp.id, exp]));
+  const handleAddRouteInDb = async (name) => {
+    try {
+      await api.routes.add(name);
+      setRoutes(prev => [...prev, name]);
+    } catch (error) {
+      console.error('Error adding route:', error);
+    }
+  };
 
-        for (const expense of newExpenses) {
-          if (existingExpenseMap.has(expense.id)) {
-            // Update existing - Note: API doesn't have update, so skip
-          } else {
-            // Add new
-            await api.expenses.add(expense);
-          }
-        }
+  const handleAddExpenseInDb = async (expense) => {
+    try {
+      const saved = await api.expenses.add(expense);
+      setExpenses(prev => [saved, ...prev]);
+      return saved;
+    } catch (error) {
+      console.error('Error adding expense:', error);
+    }
+  };
 
-        // Delete expenses that were removed
-        for (const existingExpense of existingExpenses) {
-          if (!newExpenses.find(exp => exp.id === existingExpense.id)) {
-            await api.expenses.delete(existingExpense.id);
-          }
-        }
-      } catch (error) {
-        console.error('Error syncing expenses with database:', error);
-      }
-    }, 0);
+  const handleDeleteExpenseInDb = async (id) => {
+    try {
+      await api.expenses.delete(id);
+      setExpenses(prev => prev.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+    }
   };
 
   // Authentication Handler
@@ -636,9 +631,28 @@ function App() {
   // Main Layout
   return (
     <div className={`app-container ${isDarkMode ? 'dark' : 'light'}-theme`}>
-      <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      {/* Mobile floating hamburger button */}
+      {isMobile && !isMobileSidebarOpen && (
+        <button
+          className="mobile-hamburger-btn"
+          onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu size={22} />
+        </button>
+      )}
+
+      {/* Mobile backdrop overlay */}
+      {isMobile && isMobileSidebarOpen && (
+        <div
+          className="mobile-sidebar-overlay"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobile ? (isMobileSidebarOpen ? 'mobile-open' : 'mobile-closed') : ''}`}>
         <div className="sidebar-toggle-container">
-          <button className="sidebar-toggle" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}><Menu size={20} /></button>
+          <button className="sidebar-toggle" onClick={() => isMobile ? setIsMobileSidebarOpen(false) : setIsSidebarCollapsed(!isSidebarCollapsed)}><Menu size={20} /></button>
         </div>
         <div className="brand">
           <img
@@ -666,7 +680,7 @@ function App() {
               <div
                 key={nav.id}
                 className={`nav-item ${activeTab === nav.id ? 'active' : ''}`}
-                onClick={() => { setActiveTab(nav.id); setSearchTerm(''); }}
+                onClick={() => handleNavClick(nav.id)}
               >
                 {nav.icon} <span>{nav.label}</span>
               </div>
@@ -747,10 +761,10 @@ function App() {
             <Dashboard items={items} salesHistory={salesHistory} statementEntries={statementEntries} expenses={expenses} onReset={handleFullReset} />
           )}
           {activeTab === 'Inventory' && (
-            <Inventory items={items} setItems={handleSetItems} searchTerm={searchTerm} />
+            <Inventory items={items} setItems={handleSetItems} addItem={handleAddItem} updateItem={updateItemInDb} deleteItemFromDb={deleteItemFromDb} searchTerm={searchTerm} />
           )}
           {activeTab === 'Sales' && (
-            <Sales items={items} onConfirmSale={recordSale} salesHistory={salesHistory} routes={routes} setRoutes={handleSetRoutes} onResetDailySales={handleResetDailySales} />
+            <Sales items={items} onConfirmSale={recordSale} salesHistory={salesHistory} routes={routes} onAddRoute={handleAddRouteInDb} onResetDailySales={handleResetDailySales} />
           )}
           {activeTab === 'Creditors' && (
             <Creditors
@@ -769,7 +783,7 @@ function App() {
             <History items={items} salesHistory={salesHistory} statementEntries={statementEntries} />
           )}
           {activeTab === 'Expenses' && (
-            <Expenses expenses={expenses} setExpenses={handleSetExpenses} onResetDailyExpenses={handleResetDailyExpenses} />
+            <Expenses expenses={expenses} onAddExpense={handleAddExpenseInDb} onDeleteExpense={handleDeleteExpenseInDb} onResetDailyExpenses={handleResetDailyExpenses} />
           )}
           {activeTab === 'Analytics' && (
             <Analytics

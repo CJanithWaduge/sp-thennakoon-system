@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Trash2, CheckCircle, Wallet, Clock, Percent, RotateCcw, Pencil } from 'lucide-react';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 
-const Sales = ({ items, onConfirmSale, salesHistory, routes = [], setRoutes, onResetDailySales }) => {
+const Sales = ({ items, onConfirmSale, salesHistory, routes = [], onAddRoute, onResetDailySales }) => {
   const [shopName, setShopName] = useState('');
   const [selectedRoute, setSelectedRoute] = useState(() => {
     const saved = localStorage.getItem('samindu_sales_selected_route');
@@ -87,7 +87,7 @@ const Sales = ({ items, onConfirmSale, salesHistory, routes = [], setRoutes, onR
 
   const handleAddRoute = () => {
     if (!newRouteName.trim()) return;
-    setRoutes([...routes, newRouteName.trim()]);
+    onAddRoute(newRouteName.trim());
     setSelectedRoute(newRouteName.trim());
     setNewRouteName('');
   };

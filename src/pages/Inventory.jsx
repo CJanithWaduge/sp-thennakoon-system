@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Truck, Warehouse, Trash2, Search, Plus, AlertTriangle, Pencil, Check, X, Calendar } from 'lucide-react';
 import { calculateTotalAssets, formatCurrency } from '../utils/calculations';
 
-const Inventory = ({ items, setItems, searchTerm }) => {
+const Inventory = ({ items, setItems, addItem, updateItem, deleteItemFromDb, searchTerm }) => {
   const [inputValues, setInputValues] = useState({});
   const [newItemName, setNewItemName] = useState('');
+  const [addingItem, setAddingItem] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm || '');
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemName, setEditingItemName] = useState('');
@@ -20,19 +21,21 @@ const Inventory = ({ items, setItems, searchTerm }) => {
   // Enable compact mode when inventory exceeds 20 items
   const isCompactMode = items.length > 20;
 
-  const addItem = () => {
-    if (newItemName.trim() === '') return;
-    const newItem = {
-      id: Date.now(),
+  const addItemHandler = async () => {
+    if (newItemName.trim() === '' || addingItem) return;
+    setAddingItem(true);
+    const newItemData = {
       createdAt: new Date(selectedDate).toISOString(),
-      name: newItemName,
+      name: newItemName.trim(),
       whQty: 0,
       lorryQty: 0,
       buyingPrice: 0,
       sellingPrice: 0
     };
-    setItems([...items, newItem]);
+    // addItem saves to Firestore and returns the item with its real Firebase ID
+    await addItem(newItemData);
     setNewItemName('');
+    setAddingItem(false);
   };
 
   const handleInputChange = (id, field, value) => {
@@ -48,25 +51,25 @@ const Inventory = ({ items, setItems, searchTerm }) => {
 
     if (qty <= 0) return;
 
-    const itemName = items.find(i => i.id === id)?.name || 'Unknown Item';
+    const item = items.find(i => i.id === id);
+    if (!item) return;
 
-    setItems(items.map(item => {
-      if (item.id === id) {
-        // Calculate new buying price based on weighted average
-        const currentWhQty = item.whQty || 0;
-        const currentTotalValue = currentWhQty * (item.buyingPrice || 0);
-        const newTotalValue = currentTotalValue + billValue;
-        const newTotalQty = currentWhQty + qty;
-        const newUnitPrice = newTotalQty > 0 ? newTotalValue / newTotalQty : 0;
+    // Calculate new buying price based on weighted average
+    const currentWhQty = item.whQty || 0;
+    const currentTotalValue = currentWhQty * (item.buyingPrice || 0);
+    const newTotalValue = currentTotalValue + billValue;
+    const newWhQty = currentWhQty + qty;
+    const newUnitPrice = newWhQty > 0 ? newTotalValue / newWhQty : 0;
 
-        return {
-          ...item,
-          whQty: currentWhQty + qty,
-          buyingPrice: newUnitPrice
-        };
+    setItems(items.map(i => {
+      if (i.id === id) {
+        return { ...i, whQty: newWhQty, buyingPrice: newUnitPrice };
       }
-      return item;
+      return i;
     }));
+
+    // Persist to Firestore immediately
+    updateItem(id, { whQty: newWhQty, buyingPrice: newUnitPrice });
 
     handleInputChange(id, 'qty', '');
     handleInputChange(id, 'bill', '');
@@ -83,20 +86,28 @@ const Inventory = ({ items, setItems, searchTerm }) => {
 
     const itemName = item?.name || 'Unknown Item';
 
+    const newWhQty = (item.whQty || 0) - amount;
+    const newLorryQty = (item.lorryQty || 0) + amount;
+
     setItems(items.map(item =>
       item.id === id ? {
         ...item,
-        whQty: (item.whQty || 0) - amount,
-        lorryQty: (item.lorryQty || 0) + amount
+        whQty: newWhQty,
+        lorryQty: newLorryQty
       } : item
     ));
+
+    // Persist to Firestore immediately
+    updateItem(id, { whQty: newWhQty, lorryQty: newLorryQty });
 
     handleInputChange(id, 'load', '');
   };
 
-  const deleteItem = (id) => {
+  const deleteItem = async (id) => {
     if (window.confirm("Delete this item?")) {
       setItems(items.filter(item => item.id !== id));
+      // Persist deletion to Firestore immediately
+      await deleteItemFromDb(id);
     }
   };
 
@@ -110,6 +121,8 @@ const Inventory = ({ items, setItems, searchTerm }) => {
       setItems(items.map(item =>
         item.id === id ? { ...item, name: editingItemName.trim() } : item
       ));
+      // Persist rename to Firestore immediately
+      updateItem(id, { name: editingItemName.trim() });
     }
     setEditingItemId(null);
     setEditingItemName('');
@@ -160,10 +173,11 @@ const Inventory = ({ items, setItems, searchTerm }) => {
           placeholder="New Item Name"
           value={newItemName}
           onChange={(e) => setNewItemName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addItemHandler()}
         />
 
-        <button className="add-btn" onClick={addItem}>
-          <Plus size={16} /> Add Item
+        <button className="add-btn" onClick={addItemHandler} disabled={addingItem}>
+          <Plus size={16} /> {addingItem ? 'Adding...' : 'Add Item'}
         </button>
       </div>
 

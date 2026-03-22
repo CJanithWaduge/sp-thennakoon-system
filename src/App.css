@@ -1778,3 +1778,331 @@ button.auth-button:valid {
   display: flex;
   justify-content: flex-end;
 }
+
+/* =====================================================
+   MOBILE RESPONSIVENESS — GLOBAL
+   ===================================================== */
+
+/* --- MOBILE SIDEBAR OVERLAY BACKDROP --- */
+.mobile-sidebar-overlay {
+  display: none;
+}
+
+/* --- FLOATING HAMBURGER BUTTON (mobile only) --- */
+.mobile-hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1100;
+  background: var(--header-pill-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text-main);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.mobile-hamburger-btn:hover {
+  background: var(--glass-bg);
+}
+
+/* =====================================================
+   TABLET & LARGE PHONE  ≤ 768px
+   ===================================================== */
+@media (max-width: 768px) {
+
+  /* --- Floating hamburger button --- */
+  .mobile-hamburger-btn {
+    display: flex;
+  }
+
+  /* --- Mobile sidebar overlay backdrop --- */
+  .mobile-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+  }
+
+  /* --- Sidebar becomes slide-in drawer --- */
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -280px;
+    width: 260px !important;
+    min-width: 260px !important;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease !important;
+    padding: 20px 12px !important;
+    border-right: 1px solid var(--border-color) !important;
+    overflow-y: auto;
+  }
+
+  /* Override the collapsed state on mobile: keep sidebar usable */
+  .sidebar.collapsed {
+    left: -280px;
+    width: 260px !important;
+    min-width: 260px !important;
+    padding: 20px 12px !important;
+  }
+
+  /* Restore nav items & footer that were hidden in collapsed mode */
+  .sidebar.collapsed .brand,
+  .sidebar.collapsed .nav-items-container,
+  .sidebar.collapsed .sidebar-footer {
+    display: flex;
+  }
+
+  .sidebar.collapsed .brand {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar.collapsed .nav-items-container {
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .sidebar.collapsed .sidebar-footer {
+    flex-direction: column;
+  }
+
+  /* Mobile open/closed positions */
+  .sidebar.mobile-closed {
+    left: -280px;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.4);
+  }
+
+  /* The X-close toggle is always visible inside the open mobile sidebar */
+  .sidebar.mobile-open .sidebar-toggle-container {
+    display: block;
+  }
+
+  /* --- Main content — full width on mobile --- */
+  .app-container {
+    flex-direction: column;
+  }
+
+  .main-content {
+    padding: 60px 12px 24px 12px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* --- Header title --- */
+  .header-title {
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  /* --- Pill header — wraps for narrow screens --- */
+  .pill-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 16px;
+    margin-bottom: 18px;
+  }
+
+  .search-section {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .new-item-input {
+    flex: 1 1 calc(60% - 5px);
+    min-width: 0;
+  }
+
+  .add-btn {
+    flex: 1 1 calc(40% - 5px);
+    justify-content: center;
+  }
+
+  /* --- Dashboard grid — single column --- */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* --- Settings cards — single column --- */
+  .settings-container {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Inventory table — horizontal scroll --- */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .inventory-table {
+    min-width: 700px;
+  }
+
+  /* --- Bill grids — collapse to 2-column then stack --- */
+  .bill-header-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bill-line-grid {
+    grid-template-columns: 1.5fr 60px 60px 80px 60px 90px 110px auto;
+    gap: 8px;
+  }
+
+  /* --- Net value footer --- */
+  .net-value-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .total-net-amount {
+    font-size: 26px;
+  }
+
+  /* --- Auth card --- */
+  .auth-card {
+    padding: 36px 24px;
+    max-width: 100%;
+    margin: 0 16px;
+  }
+
+  /* --- Date display --- */
+  .date-display {
+    font-size: 16px;
+    margin-top: 16px;
+    margin-bottom: 14px;
+  }
+
+  /* --- Cards --- */
+  .card {
+    min-height: 130px;
+    padding: 18px;
+  }
+
+  /* --- Settings rows --- */
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* =====================================================
+   SMALL PHONE  ≤ 480px
+   ===================================================== */
+@media (max-width: 480px) {
+
+  /* --- Heading sizes --- */
+  .header-title {
+    font-size: 18px;
+  }
+
+  /* --- Pill header tighter --- */
+  .pill-header {
+    padding: 10px 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  /* --- Cards smaller --- */
+  .card {
+    min-height: 110px;
+    padding: 14px;
+  }
+
+  .card-value {
+    font-size: 20px;
+  }
+
+  /* --- Net value --- */
+  .total-net-amount {
+    font-size: 22px;
+  }
+
+  /* --- Auth card --- */
+  .auth-card {
+    padding: 28px 16px;
+    border-radius: 14px;
+  }
+
+  .auth-title {
+    font-size: 22px;
+  }
+
+  .auth-profile-picture {
+    width: 80px;
+    height: 80px;
+  }
+
+  .auth-profile-placeholder {
+    font-size: 36px;
+  }
+
+  /* --- Bill header grid full stack on tiny screens --- */
+  .bill-header-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Bill line grid — allow horizontal scroll --- */
+  .bill-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- Summary cards text --- */
+  .card-title {
+    font-size: 12px;
+  }
+
+  /* --- Date display --- */
+  .date-display {
+    font-size: 14px;
+  }
+
+  /* --- Inventory table tighter minimum --- */
+  .inventory-table {
+    min-width: 580px;
+  }
+}
+
+/* =====================================================
+   TOUCH DEVICE IMPROVEMENTS
+   ===================================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Disable translateX hover on nav items for touch (prevents layout jump) */
+  .nav-item:hover {
+    transform: none;
+  }
+
+  /* Larger tap targets */
+  .nav-item {
+    padding: 13px 18px;
+  }
+
+  .delete-icon-btn {
+    padding: 11px;
+  }
+
+  .joined-icon-btn {
+    padding: 10px 16px;
+  }
+}

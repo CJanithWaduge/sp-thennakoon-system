@@ -3,7 +3,7 @@ import { RotateCcw, Calendar } from 'lucide-react';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import '../styles/Expenses.css';
 
-const Expenses = ({ expenses, setExpenses, onResetDailyExpenses }) => {
+const Expenses = ({ expenses, onAddExpense, onDeleteExpense, onResetDailyExpenses }) => {
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
   const [category, setCategory] = useState('General');
@@ -26,7 +26,7 @@ const Expenses = ({ expenses, setExpenses, onResetDailyExpenses }) => {
       category: category || 'General',
       date: new Date(selectedDate).toISOString()
     };
-    setExpenses(prev => [newEntry, ...prev]);
+    onAddExpense(newEntry);
     setDescription('');
     setValue('');
     setCategory('General');
@@ -34,7 +34,7 @@ const Expenses = ({ expenses, setExpenses, onResetDailyExpenses }) => {
 
   const deleteExpense = (id) => {
     if (!window.confirm('Delete this expense?')) return;
-    setExpenses(prev => prev.filter(x => x.id !== id));
+    onDeleteExpense(id);
   };
 
   const handleResetDailyExpensesConfirm = () => {
