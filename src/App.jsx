@@ -620,6 +620,7 @@ function App() {
 
   // Authentication Handler
   const handleAuthenticated = (username) => {
+    localStorage.setItem('samindu_current_user', username);
     setLoggedInUser(username);
     setIsAuthenticated(true);
   };

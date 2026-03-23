@@ -5,7 +5,9 @@ import defaultLogo from '../assets/logo.png';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  sendPasswordResetEmail 
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  signOut
 } from 'firebase/auth';
 
 const Auth = ({ onAuthenticated, profileImage }) => {
@@ -16,6 +18,7 @@ const Auth = ({ onAuthenticated, profileImage }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showResend, setShowResend] = useState(false);
   
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -40,9 +43,19 @@ const Auth = ({ onAuthenticated, profileImage }) => {
     if (!email || !password) return setError('Please enter email and password.');
     
     setError('');
+    setShowResend(false);
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        setError('Please verify your email first. A verification link was sent to your email.');
+        setShowResend(true);
+        setLoading(false);
+        return;
+      }
+
       console.log('✅ LOGIN SUCCESS for:', userCredential.user.email);
       onAuthenticated(userCredential.user.email);
       // We don't stop loading here to prevent flashing before the app swaps out the component
@@ -56,6 +69,7 @@ const Auth = ({ onAuthenticated, profileImage }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+    setShowResend(false);
     
     if (!email || !password || !confirmPassword) return setError('All fields are required.');
     if (password !== confirmPassword) return setError('Passwords do not match.');
@@ -65,7 +79,13 @@ const Auth = ({ onAuthenticated, profileImage }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log('✅ REGISTRATION SUCCESS for:', userCredential.user.email);
-      onAuthenticated(userCredential.user.email);
+      
+      await sendEmailVerification(userCredential.user);
+      await signOut(auth); // Sign them out so they must verify and log in
+      
+      setMessage('Account created! Please check your email and click the verification link before logging in.');
+      setMode('login');
+      setLoading(false);
     } catch (err) {
       console.error('❌ REGISTRATION FAILED:', err);
       setError(getErrorMessage(err.code));
@@ -87,6 +107,25 @@ const Auth = ({ onAuthenticated, profileImage }) => {
       setLoading(false);
     } catch (err) {
       console.error('❌ PASSWORD RESET FAILED:', err);
+      setError(getErrorMessage(err.code));
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      // Sign in briefly to send the email
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      await signOut(auth); // Immediately sign out
+      
+      setMessage('A new verification link has been sent. Please check your inbox and spam folder.');
+      setShowResend(false);
+      setLoading(false);
+    } catch (err) {
+      console.error('❌ RESEND FAILED:', err);
       setError(getErrorMessage(err.code));
       setLoading(false);
     }
@@ -138,6 +177,15 @@ const Auth = ({ onAuthenticated, profileImage }) => {
           <div style={{ background: '#f0fdf4', color: '#166534', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', borderLeft: '4px solid #22c55e' }}>
             {message}
           </div>
+        )}
+        {showResend && (
+          <button 
+            type="button" 
+            onClick={handleResendVerification}
+            style={{ width: '100%', marginBottom: '20px', padding: '10px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', color: '#334155', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}
+          >
+            Resend Verification Email
+          </button>
         )}
 
         {/* FORM */}

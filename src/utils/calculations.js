@@ -5,6 +5,7 @@
  * @returns {number} Total asset value in rupees
  */
 export const calculateTotalAssets = (items = []) => {
+  if (!items || !Array.isArray(items)) return 0;
   return items.reduce((acc, item) => {
     // Support both naming conventions (whQty/warehouseQty and buyingPrice/price)
     const warehouseQty = item.warehouseQty || item.whQty || 0;

@@ -39,4 +39,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 800,
     cssCodeSplit: true,
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setupTests.js']
+  }
 })
