@@ -24,7 +24,7 @@ function App() {
   console.log('App component is rendering');
 
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);

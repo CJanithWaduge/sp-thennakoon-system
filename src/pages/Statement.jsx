@@ -61,7 +61,7 @@ const Statement = ({ statementEntries, onAddEntry, onDeleteEntry }) => {
       {/* 2. ENTRY FORM */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <div className="card-title"><Plus size={16} /> New Company Transaction</div>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', marginTop: '10px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-end', marginTop: '10px' }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: '12px', color: 'var(--text-light)' }}>Entry Type</label>
             <select className="inventory-input" value={type} onChange={e => setType(e.target.value)}>

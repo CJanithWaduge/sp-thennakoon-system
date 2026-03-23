@@ -880,6 +880,8 @@ label {
   font-size: 13px;
   color: var(--text-main);
   font-weight: 600;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .read-only-box.highlight {
@@ -1053,6 +1055,8 @@ label {
   outline: none;
   font-weight: 500;
   font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .inventory-input::placeholder {
@@ -1962,8 +1966,15 @@ button.auth-button:valid {
   }
 
   .bill-line-grid {
-    grid-template-columns: 1.5fr 60px 60px 80px 60px 90px 110px auto;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .bill-line-grid > *:nth-child(1),
+  .bill-line-grid > *:nth-child(6),
+  .bill-line-grid > *:nth-child(7),
+  .bill-line-grid > *:nth-child(8) {
+    grid-column: span 2;
   }
 
   /* --- Net value footer --- */

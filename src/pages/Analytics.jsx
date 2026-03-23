@@ -236,7 +236,7 @@ const Analytics = ({
       </div>
 
       {/* Requirement 3: Collection Rate Gauge & Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', marginBottom: '48px', alignItems: 'stretch' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '32px', marginBottom: '48px', alignItems: 'stretch' }}>
 
         {/* Gauge Card */}
         <RevealSection delay={100}>
@@ -286,7 +286,7 @@ const Analytics = ({
         </RevealSection>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '32px' }}>
 
         {/* Requirement 1: Debt Aging Refactor */}
         <RevealSection delay={500}>
