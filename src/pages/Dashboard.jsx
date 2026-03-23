@@ -108,9 +108,11 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
   const filteredSalesForDate = useMemo(() => {
     return salesHistory.filter(s => {
       try {
-        const saleDate = typeof s.date === 'string' ? new Date(s.date) : new Date();
-        const saleYear = saleDate.getFullYear();
-        const saleDateStr = saleDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const saleDate = new Date(s.date || s.createdAt);
+        if (isNaN(saleDate.getTime())) return false;
+        
+        // Format to local YYYY-MM-DD for reliable comparison
+        const saleDateStr = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}-${String(saleDate.getDate()).padStart(2, '0')}`;
 
         if (timeRangeMode === 'year-only') {
           return saleYear === selectedYear;
@@ -119,7 +121,7 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
           const maxYear = Math.max(startYear, endYear);
           return saleYear >= minYear && saleYear <= maxYear;
         } else {
-          // exact-date mode - compare date strings to avoid timezone issues
+          // exact-date mode - compare local date strings to avoid timezone issues
           return saleDateStr >= startDate && saleDateStr <= endDate;
         }
       } catch {

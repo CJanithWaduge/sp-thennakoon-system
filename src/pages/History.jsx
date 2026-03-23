@@ -9,8 +9,21 @@ const History = ({ items, salesHistory, statementEntries }) => {
   const [activeCategory, setActiveCategory] = useState('All');
 
   // Filter data based on selected month
-  const filteredSales = salesHistory.filter(s => s.date.startsWith(selectedMonth));
-  const filteredStatements = statementEntries.filter(e => e.date.startsWith(selectedMonth));
+  // Filter data based on selected month (YYYY-MM) using local dates
+  const filteredSales = salesHistory.filter(s => {
+    const d = new Date(s.date || s.createdAt);
+    if (isNaN(d.getTime())) return false;
+    const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return mStr === selectedMonth;
+  });
+
+  const filteredStatements = statementEntries.filter(e => {
+    const d = new Date(e.date || e.createdAt);
+    if (isNaN(d.getTime())) return false;
+    const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return mStr === selectedMonth;
+  });
+
   const filteredCredits = filteredSales.filter(s => s.isCredit);
   
   // Filter for inventory transactions (restock and load lorry)
@@ -78,7 +91,9 @@ const History = ({ items, salesHistory, statementEntries }) => {
       doc.text("3. Creditor Collections", 14, getNextY());
       const creditorPayments = [];
       filteredSales.forEach(s => s.paymentHistory?.forEach(p => {
-        if (p.date.startsWith(selectedMonth)) {
+        const d = new Date(p.date);
+        const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (mStr === selectedMonth) {
           creditorPayments.push([new Date(p.date).toLocaleDateString(), s.shopName, `Rs. ${p.amount.toLocaleString()}`]);
         }
       }));
