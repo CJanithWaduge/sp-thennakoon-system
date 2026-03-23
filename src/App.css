@@ -2117,3 +2117,60 @@ button.auth-button:valid {
     padding: 10px 16px;
   }
 }
+
+/* --- RESPONSIVE TABLE (CARD MODE) --- */
+@media (max-width: 768px) {
+  .responsive-table-mobile thead {
+    display: none;
+  }
+  
+  .responsive-table-mobile, 
+  .responsive-table-mobile tbody, 
+  .responsive-table-mobile tr, 
+  .responsive-table-mobile td {
+    display: block;
+    width: 100% !important;
+  }
+  
+  .responsive-table-mobile tr {
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px;
+    padding: 15px;
+    height: auto !important;
+  }
+  
+  .responsive-table-mobile td {
+    padding: 12px 0 !important;
+    border: none !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    font-size: 13px;
+    gap: 10px;
+  }
+  
+  .responsive-table-mobile td:last-child {
+    border-bottom: none !important;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  
+  .responsive-table-mobile td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 11px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  
+  .responsive-table-mobile td .installment-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 48px !important;
+    font-size: 14px !important;
+  }
+}

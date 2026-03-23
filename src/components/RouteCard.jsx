@@ -222,7 +222,7 @@ const RouteCard = ({
                 background: 'transparent'
             }}>
                 <div style={{ padding: '20px' }}>
-                    <table className="inventory-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table className="inventory-table responsive-table-mobile" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                                 <th style={{ textAlign: 'left', padding: '12px', color: 'var(--text-light)', fontSize: '11px', textTransform: 'uppercase', width: '15%' }}>Date</th>
@@ -241,12 +241,12 @@ const RouteCard = ({
 
                                 return (
                                     <tr key={invoice.id} style={{ borderBottom: '1px solid var(--border-color)', height: '60px' }}>
-                                        <td style={{ padding: '12px', verticalAlign: 'middle', color: 'var(--text-light)', fontSize: '13px', textAlign: 'left' }}>
+                                        <td data-label="Date" style={{ padding: '12px', verticalAlign: 'middle', color: 'var(--text-light)', fontSize: '13px', textAlign: 'left' }}>
                                             {new Date(invoice.date).toLocaleDateString()}
                                         </td>
 
                                         {/* SHOP NAME CELL - Editable */}
-                                        <td style={{ padding: '12px', verticalAlign: 'middle', color: 'var(--text-main)', fontSize: '13px', fontWeight: '500', textAlign: 'left' }}>
+                                        <td data-label="Shop" style={{ padding: '12px', verticalAlign: 'middle', color: 'var(--text-main)', fontSize: '13px', fontWeight: '500', textAlign: 'left' }}>
                                             {editingShopId === invoice.id ? (
                                                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                                                     <input
@@ -285,20 +285,21 @@ const RouteCard = ({
                                             )}
                                         </td>
 
-                                        <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', color: 'var(--text-light)', fontSize: '13px' }}>
+                                        <td data-label="Total Bill" style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', color: 'var(--text-light)', fontSize: '13px' }}>
                                             Rs. {invoice.totalBill.toLocaleString()}
                                         </td>
-                                        <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', color: '#107c10', fontSize: '13px', fontWeight: '500' }}>
+                                        <td data-label="Paid" style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', color: '#107c10', fontSize: '13px', fontWeight: '500' }}>
                                             <div>Rs. {paid.toLocaleString()}</div>
                                             {invoice.paymentHistory?.length > 0 && (
                                                 <div style={{ fontSize: '10px', color: 'var(--text-light)', marginTop: '2px' }}>({invoice.paymentHistory.length} installments)</div>
                                             )}
                                         </td>
-                                        <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', fontWeight: 'bold', color: '#c42b1c', fontSize: '13px' }}>
+                                        <td data-label="Remaining" style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right', fontWeight: 'bold', color: '#c42b1c', fontSize: '13px' }}>
                                             Rs. {remaining.toLocaleString()}
                                         </td>
                                         <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'right' }}>
                                             <button
+                                                className="installment-btn"
                                                 style={{
                                                     background: '#0078d4',
                                                     color: 'white',
