@@ -450,11 +450,17 @@ function App() {
   };
 
   const handleResetDailySales = async () => {
-    // Get today's date in the same format as stored
-    const today = new Date().toLocaleDateString();
+    // Format today to local YYYY-MM-DD for reliable comparison
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // Find all sales for today
-    const todaysSales = salesHistory.filter(s => new Date(s.date).toLocaleDateString() === today);
+    // Find all sales for today using a robust local date comparison
+    const todaysSales = salesHistory.filter(s => {
+      if (!s.date) return false;
+      const saleDate = new Date(s.date);
+      const saleDateStr = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}-${String(saleDate.getDate()).padStart(2, '0')}`;
+      return saleDateStr === todayStr;
+    });
 
     if (todaysSales.length === 0) {
       alert('No sales to reset for today!');
@@ -490,7 +496,12 @@ function App() {
       for (const sale of todaysSales) {
         await api.sales.delete(sale.id);
       }
-      setSalesHistory(prev => prev.filter(s => new Date(s.date).toLocaleDateString() !== today));
+      setSalesHistory(prev => prev.filter(s => {
+        if (!s.date) return true;
+        const saleDate = new Date(s.date);
+        const saleDateStr = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}-${String(saleDate.getDate()).padStart(2, '0')}`;
+        return saleDateStr !== todayStr;
+      }));
       console.log(`✓ Deleted ${todaysSales.length} sale(s) and restored inventory for today`);
     } catch (error) {
       console.error('Error deleting today\'s sales:', error);
@@ -499,11 +510,16 @@ function App() {
   };
 
   const handleResetDailyExpenses = async () => {
-    // Get today's date in the same format as stored
-    const today = new Date().toLocaleDateString();
+    // Format today to local YYYY-MM-DD for reliable comparison
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // Find all expenses for today
-    const todaysExpenses = expenses.filter(e => new Date(e.createdAt).toLocaleDateString() === today);
+    const todaysExpenses = expenses.filter(e => {
+      const expDate = new Date(e.createdAt || e.date);
+      const expDateStr = `${expDate.getFullYear()}-${String(expDate.getMonth() + 1).padStart(2, '0')}-${String(expDate.getDate()).padStart(2, '0')}`;
+      return expDateStr === todayStr;
+    });
 
     if (todaysExpenses.length === 0) {
       alert('No expenses to reset for today!');
@@ -515,7 +531,11 @@ function App() {
       for (const expense of todaysExpenses) {
         await api.expenses.delete(expense.id);
       }
-      setExpenses(prev => prev.filter(e => new Date(e.createdAt).toLocaleDateString() !== today));
+      setExpenses(prev => prev.filter(e => {
+        const expDate = new Date(e.createdAt || e.date);
+        const expDateStr = `${expDate.getFullYear()}-${String(expDate.getMonth() + 1).padStart(2, '0')}-${String(expDate.getDate()).padStart(2, '0')}`;
+        return expDateStr !== todayStr;
+      }));
       console.log(`✓ Deleted ${todaysExpenses.length} expense(s) for today`);
     } catch (error) {
       console.error('Error deleting today\'s expenses:', error);

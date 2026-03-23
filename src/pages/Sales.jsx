@@ -92,9 +92,25 @@ const Sales = ({ items, onConfirmSale, salesHistory, routes = [], onAddRoute, on
     setNewRouteName('');
   };
 
-  // Filter sales for today only (for display)
-  const today = new Date().toLocaleDateString();
-  const todaysSales = salesHistory.filter(s => new Date(s.date).toLocaleDateString() === today);
+  // Filter sales based on the selected date for card counters
+  const todaysSales = useMemo(() => {
+    return salesHistory.filter(s => {
+      // Handle potential fallback fields for date
+      const dateVal = s.date || s.createdAt;
+      if (!dateVal) return false;
+      
+      try {
+        const saleDate = new Date(dateVal);
+        if (isNaN(saleDate.getTime())) return false;
+        
+        // Format to local YYYY-MM-DD for reliable comparison
+        const saleDateStr = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}-${String(saleDate.getDate()).padStart(2, '0')}`;
+        return saleDateStr === selectedDate;
+      } catch {
+        return false;
+      }
+    });
+  }, [salesHistory, selectedDate]);
 
   const totalCashValue = todaysSales.filter(s => !s.isCredit).reduce((sum, s) => sum + s.totalBill, 0);
   const totalCreditValue = todaysSales.filter(s => s.isCredit).reduce((sum, s) => sum + s.totalBill, 0);
