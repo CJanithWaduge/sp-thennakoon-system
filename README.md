@@ -6,6 +6,28 @@ A complete desktop/web application for managing agency operations with sales, in
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) for detailed release information.
 
+## What We Solve Here
+
+**Problem:** Agencies often struggle with manual tracking of inventory, sales, expenses, and creditor relationships, leading to inefficiencies, errors in financial reporting, and lack of real-time insights into business performance.
+
+**Solution:** Our Agency Management System provides a centralized, user-friendly platform that automates and streamlines agency operations. It offers comprehensive modules for inventory management, sales tracking, expense monitoring, creditor management, and financial analytics. The system includes offline capability, secure user authentication, automated report generation in PDF and Excel formats, and a responsive dashboard with visual analytics to help agencies make data-driven decisions.
+
+## Tech Stack We Used Currently
+
+- **Frontend Framework:** React 19 with Vite for fast development and building
+- **Routing:** React Router DOM for client-side navigation
+- **Database:** Firebase Firestore with offline persistence (IndexedDB)
+- **Authentication:** Firebase Auth
+- **Charts & Visualizations:** Recharts for interactive data visualizations
+- **PDF Generation:** jsPDF and jsPDF-Autotable for report exports
+- **Excel Export:** xlsx library for spreadsheet exports
+- **Icons:** Lucide React for consistent iconography
+- **Encryption:** CryptoJS for data security
+- **PWA Features:** Vite PWA plugin for offline functionality and installability
+- **Testing:** Vitest with React Testing Library
+- **Code Quality:** ESLint for linting and code standards
+- **Build Tool:** Vite for development server and production builds
+
 ## Quick Start
 
 ### Development
