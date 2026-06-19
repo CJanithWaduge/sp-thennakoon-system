@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, UserPlus, LogIn, KeyRound, ArrowLeft } from 'lucide-react';
 import { auth } from '../db/firebase-config';
 import defaultLogo from '../assets/logo.png';
@@ -12,6 +12,14 @@ import {
 
 const Auth = ({ onAuthenticated, profileImage }) => {
   const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot'
+  const registrationDisabled = import.meta.env.VITE_DISABLE_REGISTRATION === 'true';
+
+  useEffect(() => {
+    if (registrationDisabled && mode === 'register') {
+      setMode('login');
+    }
+  }, [registrationDisabled, mode]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -272,7 +280,7 @@ const Auth = ({ onAuthenticated, profileImage }) => {
         </form>
 
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#6b7280' }}>
-          {mode === 'login' && (
+          {mode === 'login' && !registrationDisabled && (
             <p>
               Don't have an account?{' '}
               <span onClick={() => { setMode('register'); setError(''); setMessage(''); }} style={{ color: '#2563eb', fontWeight: '500', cursor: 'pointer' }}>

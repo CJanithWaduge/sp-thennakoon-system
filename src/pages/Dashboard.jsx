@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { RefreshCcw, AlertTriangle, Calendar } from 'lucide-react';
 import { calculateTotalAssets, formatCurrency } from '../utils/calculations';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 
-const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expenses = [] }) => {
+const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expenses = [], discountBucket = { maxValue: 0, currentValue: 0 }, onResetDiscountBucket }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [timeRangeMode, setTimeRangeMode] = useState(() => {
@@ -23,13 +23,19 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
     return saved ? parseInt(saved) : new Date().getFullYear();
   });
   // const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Unused
+  const startDateRef = useRef(null);
+  const endDateRef = useRef(null);
+  const todayLocal = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
   const [startDate, setStartDate] = useState(() => {
     const saved = localStorage.getItem('samindu_dashboard_start_date');
-    return saved || new Date().toISOString().split('T')[0];
+    return saved || todayLocal();
   });
   const [endDate, setEndDate] = useState(() => {
     const saved = localStorage.getItem('samindu_dashboard_end_date');
-    return saved || new Date().toISOString().split('T')[0];
+    return saved || todayLocal();
   });
 
   const getMonthYearString = () => {
@@ -74,13 +80,15 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
 
       // If the card archived is Expenses, clear the stored monthly expenses list
       if (confirmAction.cardName === 'Total Expenses') {
-        // Note: Expenses clearing is handled in parent component via onReset or similar
-        // For now, we'll keep localStorage clear for compatibility
         localStorage.setItem('expenses', JSON.stringify([]));
       }
 
-      // Toggle the card to display zero values
-      toggleCardZero(confirmAction.cardName);
+      if (confirmAction.cardName === 'Discount Bucket') {
+        onResetDiscountBucket?.();
+        setZeroedCards(prev => { const next = new Set(prev); next.delete('Discount Bucket'); return next; });
+      } else {
+        toggleCardZero(confirmAction.cardName);
+      }
 
       alert(`✅ ${confirmAction.cardName} has been reset to zero. New values will accumulate from now.`);
     }
@@ -113,6 +121,7 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
         
         // Format to local YYYY-MM-DD for reliable comparison
         const saleDateStr = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}-${String(saleDate.getDate()).padStart(2, '0')}`;
+        const saleYear = saleDate.getFullYear();
 
         if (timeRangeMode === 'year-only') {
           return saleYear === selectedYear;
@@ -298,31 +307,51 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
             <>
               <div>
                 <label className="bill-label" style={{ fontSize: '12px', marginBottom: '6px', display: 'block' }}>Start Date</label>
-                <input
-                  type="date"
-                  className="inventory-input"
-                  value={startDate}
-                  onChange={(e) => {
-                    const newDate = e.target.value;
-                    setStartDate(newDate);
-                    localStorage.setItem('samindu_dashboard_start_date', newDate);
-                  }}
-                  style={{ fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
-                />
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <input
+                    ref={startDateRef}
+                    type="date"
+                    className="inventory-input"
+                    value={startDate}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setStartDate(newDate);
+                      localStorage.setItem('samindu_dashboard_start_date', newDate);
+                    }}
+                    style={{ fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => startDateRef.current?.showPicker()}
+                    className="calendar-btn"
+                  >
+                    <Calendar size={14} /> Calendar
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="bill-label" style={{ fontSize: '12px', marginBottom: '6px', display: 'block' }}>End Date</label>
-                <input
-                  type="date"
-                  className="inventory-input"
-                  value={endDate}
-                  onChange={(e) => {
-                    const newDate = e.target.value;
-                    setEndDate(newDate);
-                    localStorage.setItem('samindu_dashboard_end_date', newDate);
-                  }}
-                  style={{ fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
-                />
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <input
+                    ref={endDateRef}
+                    type="date"
+                    className="inventory-input"
+                    value={endDate}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setEndDate(newDate);
+                      localStorage.setItem('samindu_dashboard_end_date', newDate);
+                    }}
+                    style={{ fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => endDateRef.current?.showPicker()}
+                    className="calendar-btn"
+                  >
+                    <Calendar size={14} /> Calendar
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -490,15 +519,30 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
         <div className="card sales-card teal relative">
           <button
             className="card-restore-btn"
-            onClick={() => handleCardReset('Discount Bucket', 0)}
+            onClick={() => handleCardReset('Discount Bucket', discountBucket.currentValue)}
             title="Reset to zero"
           >
             ↺ Reset
           </button>
           <div className="card-content">
             <div className="card-title">Discount Bucket</div>
-            <div className="card-value">Rs. {zeroedCards.has('Discount Bucket') ? formatCurrency(0) : formatCurrency(0)}</div>
-            <div className="card-sub">Coming soon...</div>
+            <div className="card-value" style={{ fontSize: '18px' }}>
+              Rs. {formatCurrency(discountBucket.currentValue)}
+              <span style={{ fontSize: '14px', color: 'var(--text-light)' }}> / Rs. {formatCurrency(discountBucket.maxValue)}</span>
+            </div>
+            {discountBucket.maxValue > 0 && (
+              <div style={{ marginTop: '8px', height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: '3px', transition: 'width 0.3s ease',
+                  background: discountBucket.currentValue / discountBucket.maxValue < 0.5 ? '#22c55e'
+                    : discountBucket.currentValue / discountBucket.maxValue < 0.8 ? '#eab308' : '#ef4444',
+                  width: `${Math.min(discountBucket.currentValue / discountBucket.maxValue * 100, 100)}%`
+                }} />
+              </div>
+            )}
+            <div className="card-sub">
+              {((discountBucket.maxValue > 0 ? discountBucket.currentValue / discountBucket.maxValue : 0) * 100).toFixed(1)}% of max used
+            </div>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@
   --placeholder-color: #707070;
   --accent-color: #0067c0;
   --brand-color: #1e3a8a;
+  --theme-scheme: light;
   /* Deep Navy for Light Mode */
 }
 
@@ -30,6 +31,7 @@
   --placeholder-color: rgba(255, 255, 255, 0.5);
   --accent-color: #4cc2ff;
   --brand-color: gold;
+  --theme-scheme: dark;
   /* Gold for Dark Mode */
 }
 
@@ -1065,6 +1067,31 @@ label {
   font-size: 14px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.inventory-input[type="date"] {
+  color-scheme: var(--theme-scheme);
+}
+
+.calendar-btn {
+  background: var(--header-pill-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.calendar-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
 .inventory-input::placeholder {

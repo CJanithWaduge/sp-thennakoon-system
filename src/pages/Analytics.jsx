@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell,
+  BarChart, Bar, PieChart, Pie, Cell, RadialBarChart, RadialBar, PolarAngleAxis,
 } from 'recharts';
 import {
   TrendingUp, CreditCard, DollarSign,
-  ChevronDown, Filter, Target, Info
+  ChevronDown, Filter, Target, Info, Percent
 } from 'lucide-react';
 import { formatCurrency } from '../utils/calculations';
 
@@ -78,7 +78,8 @@ const CustomTooltip = React.memo(({ active, payload, label, colors, formatCurren
 const Analytics = ({
   salesHistory = [],
   routes = [],
-  isDarkMode = true
+  isDarkMode = true,
+  discountBucket = { maxValue: 0, currentValue: 0 }
 }) => {
   const [selectedRoute, setSelectedRoute] = useState(() => {
     const saved = localStorage.getItem('samindu_analytics_selected_route');
@@ -237,6 +238,29 @@ const Analytics = ({
 
       {/* Requirement 3: Collection Rate Gauge & Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '32px', marginBottom: '48px', alignItems: 'stretch' }}>
+
+        {/* Discount Bucket Radial Gauge */}
+        <RevealSection delay={150}>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', background: COLORS.cardBg, flex: 1, minHeight: '200px', padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600', color: COLORS.textLight }}>
+              <Percent size={16} /> Discount Bucket
+            </div>
+            <div style={{ width: '100%', maxWidth: '200px', height: '160px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" barSize={18} data={[{ name: 'Usage', value: discountBucket.maxValue > 0 ? (discountBucket.currentValue / discountBucket.maxValue) * 100 : 0, fill: (discountBucket.currentValue / (discountBucket.maxValue || 1)) < 0.5 ? '#22c55e' : (discountBucket.currentValue / (discountBucket.maxValue || 1)) < 0.8 ? '#eab308' : '#ef4444' }]} startAngle={180} endAngle={0}>
+                  <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                  <RadialBar background dataKey="value" cornerRadius={8} />
+                </RadialBarChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '800', color: (discountBucket.currentValue / (discountBucket.maxValue || 1)) < 0.5 ? '#22c55e' : (discountBucket.currentValue / (discountBucket.maxValue || 1)) < 0.8 ? '#eab308' : '#ef4444' }}>
+              {discountBucket.maxValue > 0 ? ((discountBucket.currentValue / discountBucket.maxValue) * 100).toFixed(1) : 0}%
+            </div>
+            <div style={{ fontSize: '11px', color: COLORS.textLight }}>
+              Rs. {discountBucket.currentValue.toLocaleString()} / Rs. {discountBucket.maxValue.toLocaleString()}
+            </div>
+          </div>
+        </RevealSection>
 
         {/* Gauge Card */}
         <RevealSection delay={100}>

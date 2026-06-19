@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, Download, History as HistoryIcon, Package, ShoppingCart, Users, Landmark } from 'lucide-react';
+import { Calendar, Download, History as HistoryIcon, Package, ShoppingCart, Users, Landmark, Percent } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDateTime } from '../utils/calculations';
 
-const History = ({ items, salesHistory, statementEntries }) => {
+const History = ({ items, salesHistory, statementEntries, discountBucket }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -25,6 +25,13 @@ const History = ({ items, salesHistory, statementEntries }) => {
   });
 
   const filteredCredits = filteredSales.filter(s => s.isCredit);
+
+  const discountHistory = (discountBucket?.history || []).filter(h => {
+    const d = new Date(h.timestamp);
+    if (isNaN(d.getTime())) return false;
+    const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return mStr === selectedMonth;
+  });
   
   // Filter for inventory transactions (restock and load lorry)
   const inventoryTransactions = filteredStatements.filter(e => e.type === 'restock' || e.type === 'load_lorry');
@@ -139,7 +146,8 @@ const History = ({ items, salesHistory, statementEntries }) => {
     { id: 'Inventory', icon: <Package size={14} /> },
     { id: 'Sales', icon: <ShoppingCart size={14} /> },
     { id: 'Creditors', icon: <Users size={14} /> },
-    { id: 'Statement', icon: <Landmark size={14} /> }
+    { id: 'Statement', icon: <Landmark size={14} /> },
+    { id: 'Discount Bucket', icon: <Percent size={14} /> }
   ];
 
   return (
@@ -221,6 +229,14 @@ const History = ({ items, salesHistory, statementEntries }) => {
                 <td><span className="badge-statement">COMPANY</span></td>
                 <td>{e.description || 'Statement entry'}</td>
                 <td>Rs. {(e.amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            ))}
+            {(activeCategory === 'All' || activeCategory === 'Discount Bucket') && discountHistory.map((h, i) => (
+              <tr key={i}>
+                <td>{formatDateTime(h.timestamp)}</td>
+                <td><span className={h.type === 'add' ? 'badge-sale' : h.type === 'subtract' ? 'badge-creditors' : 'badge-payment'}>{h.type.toUpperCase()}</span></td>
+                <td>{h.type === 'reset' ? 'Reset to zero' : `${h.type === 'add' ? 'Added' : 'Subtracted'} Rs. ${Math.abs(h.amount).toLocaleString()}`}</td>
+                <td style={{ color: h.amount >= 0 ? '#107c10' : '#c42b1c', fontWeight: '500' }}>Rs. {h.newValue.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

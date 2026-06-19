@@ -86,6 +86,7 @@ function App() {
   const [companyName, setCompanyName] = useState("W2 Tech Solutions");
   const [logo, setLogo] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [discountBucket, setDiscountBucket] = useState({ maxValue: 0, currentValue: 0 });
 
   const loadUserData = async (username) => {
     try {
@@ -96,7 +97,7 @@ function App() {
       // Initialize the database for this specific user
       await api.database.init(username);
 
-      const [itemsData, salesData, expensesData, statementsData, routesData, companyData, logoData, profileData] = await Promise.all([
+      const [itemsData, salesData, expensesData, statementsData, routesData, companyData, logoData, profileData, discountData] = await Promise.all([
         api.items.getAll(),
         api.sales.getAll(),
         api.expenses.getAll(),
@@ -105,6 +106,7 @@ function App() {
         api.settings.get('company_name'),
         api.settings.get('logo'),
         api.settings.get('profile_image'),
+        api.discountBucket.get(),
       ]);
 
       console.log(`📊 Data loaded for ${username}:`, {
@@ -121,6 +123,7 @@ function App() {
       setCompanyName(companyData || "Samindu System");
       setLogo(logoData || null);
       setProfileImage(profileData || null);
+      setDiscountBucket(discountData || { maxValue: 0, currentValue: 0 });
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
@@ -639,6 +642,22 @@ function App() {
     }
   };
 
+  const handleUpdateDiscountBucket = async (maxValue, currentValue, historyEntry) => {
+    const prev = discountBucket;
+    const history = [...(prev.history || [])];
+    if (historyEntry) {
+      history.unshift({ ...historyEntry, timestamp: new Date().toISOString() });
+      if (history.length > 20) history.length = 20;
+    }
+    const data = { maxValue, currentValue, history };
+    try {
+      await api.discountBucket.set(data);
+      setDiscountBucket(data);
+    } catch (error) {
+      console.error('Error updating discount bucket:', error);
+    }
+  };
+
   // Authentication Handler
   const handleAuthenticated = (username) => {
     localStorage.setItem('samindu_current_user', username);
@@ -781,7 +800,7 @@ function App() {
       <main className="main-content">
         <div style={{ width: '100%', maxWidth: '1600px' }}>
           {activeTab === 'Dashboard' && (
-            <Dashboard items={items} salesHistory={salesHistory} statementEntries={statementEntries} expenses={expenses} onReset={handleFullReset} />
+            <Dashboard items={items} salesHistory={salesHistory} statementEntries={statementEntries} expenses={expenses} discountBucket={discountBucket} onReset={handleFullReset} onResetDiscountBucket={() => handleUpdateDiscountBucket(discountBucket.maxValue, 0, { type: 'reset', amount: -discountBucket.currentValue, newValue: 0 })} />
           )}
           {activeTab === 'Inventory' && (
             <Inventory items={items} setItems={handleSetItems} addItem={handleAddItem} updateItem={updateItemInDb} deleteItemFromDb={deleteItemFromDb} searchTerm={searchTerm} />
@@ -800,13 +819,13 @@ function App() {
             />
           )}
           {activeTab === 'DiscountBucket' && (
-            <DiscountBucket />
+            <DiscountBucket discountBucket={discountBucket} onUpdate={handleUpdateDiscountBucket} />
           )}
           {activeTab === 'Statement' && (
-            <Statement statementEntries={statementEntries} onAddEntry={addStatementEntry} onDeleteEntry={deleteStatementEntry} />
+            <Statement items={items} statementEntries={statementEntries} onAddEntry={addStatementEntry} onDeleteEntry={deleteStatementEntry} />
           )}
           {activeTab === 'History' && (
-            <History items={items} salesHistory={salesHistory} statementEntries={statementEntries} />
+            <History items={items} salesHistory={salesHistory} statementEntries={statementEntries} discountBucket={discountBucket} />
           )}
           {activeTab === 'Expenses' && (
             <Expenses expenses={expenses} onAddExpense={handleAddExpenseInDb} onDeleteExpense={handleDeleteExpenseInDb} onResetDailyExpenses={handleResetDailyExpenses} />
@@ -818,6 +837,7 @@ function App() {
               routes={routes}
               items={items}
               expenses={expenses}
+              discountBucket={discountBucket}
               isDarkMode={isDarkMode}
             />
           )}

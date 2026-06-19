@@ -8,7 +8,8 @@ import {
   query, 
   orderBy,
   setDoc,
-  getDoc
+  getDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase-config';
 
@@ -154,6 +155,28 @@ export const settingsDb = {
       updatedAt: new Date().toISOString()
     });
     return true;
+  }
+};
+
+// discountBucket collection
+export const discountBucketDb = {
+  get: async () => {
+    const docRef = doc(db, 'users', currentUserId, 'discountBucket', 'data');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return { maxValue: 0, currentValue: 0, history: [] };
+  },
+  set: async (data) => {
+    const docRef = doc(db, 'users', currentUserId, 'discountBucket', 'data');
+    await setDoc(docRef, {
+      maxValue: data.maxValue,
+      currentValue: data.currentValue,
+      history: data.history || [],
+      updatedAt: serverTimestamp()
+    });
+    return data;
   }
 };
 

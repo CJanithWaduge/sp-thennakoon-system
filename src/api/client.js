@@ -5,6 +5,7 @@ import {
   statementsDb, 
   routesDb, 
   settingsDb, 
+  discountBucketDb, 
   systemDb 
 } from '../db/db';
 
@@ -65,6 +66,7 @@ const api = {
   statements: statementsDb,
   routes: routesDb,
   settings: settingsDb,
+  discountBucket: discountBucketDb,
   database: systemDb
 };
 
