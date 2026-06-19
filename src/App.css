@@ -784,6 +784,10 @@ label {
   border-left: 5px solid #ff7a18;
 }
 
+.card.teal {
+  border-left: 5px solid #00897b;
+}
+
 /* --- RECHARTS HOVER ENHANCEMENTS --- */
 .recharts-bar-rectangle,
 .recharts-bar-cursor,
@@ -834,6 +838,10 @@ label {
 
 .card.orange:hover {
   background: rgba(255, 122, 24, 0.08);
+}
+
+.card.teal:hover {
+  background: rgba(0, 137, 123, 0.08);
 }
 
 /* --- PROFESSIONAL BILLING LAYOUTS --- */

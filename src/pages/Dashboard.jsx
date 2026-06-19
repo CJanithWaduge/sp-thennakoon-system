@@ -486,6 +486,21 @@ const Dashboard = ({ items = [], salesHistory = [], statementEntries = [], expen
             <div className="card-sub">To Company - Purchases - Receipts - Deductions</div>
           </div>
         </div>
+
+        <div className="card sales-card teal relative">
+          <button
+            className="card-restore-btn"
+            onClick={() => handleCardReset('Discount Bucket', 0)}
+            title="Reset to zero"
+          >
+            ↺ Reset
+          </button>
+          <div className="card-content">
+            <div className="card-title">Discount Bucket</div>
+            <div className="card-value">Rs. {zeroedCards.has('Discount Bucket') ? formatCurrency(0) : formatCurrency(0)}</div>
+            <div className="card-sub">Coming soon...</div>
+          </div>
+        </div>
       </div>
 
       {showConfirmDialog && (

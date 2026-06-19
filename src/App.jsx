@@ -14,10 +14,11 @@ import SettingsPage from './pages/Settings';
 import Expenses from './pages/Expenses';
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
+import DiscountBucket from './pages/DiscountBucket';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   History as HistoryIcon, FileText, Sun, Moon,
-  Settings as SettingsIcon, Menu, CreditCard, BarChart3, Cog, LogOut, UserPlus, FileBarChart
+  Settings as SettingsIcon, Menu, CreditCard, BarChart3, Cog, LogOut, UserPlus, FileBarChart, Percent
 } from 'lucide-react';
 
 function App() {
@@ -691,6 +692,7 @@ function App() {
             { id: 'Inventory', label: 'Inventory Control', icon: <Package size={20} /> },
             { id: 'Sales', label: 'Daily Sales', icon: <ShoppingCart size={20} /> },
             { id: 'Creditors', label: 'Creditors', icon: <Users size={20} /> },
+            { id: 'DiscountBucket', label: 'Discount Bucket', icon: <Percent size={20} /> },
             { id: 'Expenses', label: 'Expenses', icon: <CreditCard size={20} /> },
             { id: 'Reports', label: 'Reports', icon: <FileBarChart size={20} /> },
             { id: 'Analytics', label: 'Analytics', icon: <BarChart3 size={20} /> },
@@ -796,6 +798,9 @@ function App() {
               onRenameShop={handleRenameShop}
               onRenameRoute={handleRenameRoute}
             />
+          )}
+          {activeTab === 'DiscountBucket' && (
+            <DiscountBucket />
           )}
           {activeTab === 'Statement' && (
             <Statement statementEntries={statementEntries} onAddEntry={addStatementEntry} onDeleteEntry={deleteStatementEntry} />
